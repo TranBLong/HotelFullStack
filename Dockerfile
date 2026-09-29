@@ -1,24 +1,19 @@
-
 # Stage 1: Build
-FROM node:18-alpine AS builder
-WORKDIR /app
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
 
-COPY package*.json ./
-RUN npm install
+COPY ["HotelBlazor/HotelBlazor.csproj", "HotelBlazor/"]
+COPY ["HotelBlazor.Client/HotelBlazor.Client.csproj", "HotelBlazor.Client/"]
+RUN dotnet restore "HotelBlazor/HotelBlazor.csproj"
 
 COPY . .
-RUN npm run build
+WORKDIR /src/HotelBlazor
+RUN dotnet publish -c Release -o /app/publish
 
-# Stage 2: Run
-FROM node:18-alpine AS runner
+# Stage 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-
-ENV NODE_ENV=production
-ENV PORT=3000
-
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-
-EXPOSE 3000
-CMD ["npm", "start"]
+COPY --from=build /app/publish .
+EXPOSE 80
+ENV ASPNETCORE_URLS=http://+:80
+ENTRYPOINT ["dotnet", "HotelBlazor.dll"]

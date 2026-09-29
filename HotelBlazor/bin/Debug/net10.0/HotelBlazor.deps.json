@@ -1,0 +1,94 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "HotelBlazor/1.0.0": {
+        "dependencies": {
+          "HotelBlazor.Client": "1.0.0",
+          "Microsoft.AspNetCore.Components.WebAssembly.Server": "10.0.11"
+        },
+        "runtime": {
+          "HotelBlazor.dll": {}
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly/10.0.11": {
+        "dependencies": {
+          "Microsoft.JSInterop.WebAssembly": "10.0.11"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.dll": {
+            "assemblyVersion": "10.0.11.0",
+            "fileVersion": "10.0.1126.37416"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly.Server/10.0.11": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly": "10.0.11"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll": {
+            "assemblyVersion": "10.0.11.0",
+            "fileVersion": "10.0.1126.37416"
+          }
+        }
+      },
+      "Microsoft.JSInterop.WebAssembly/10.0.11": {
+        "runtime": {
+          "lib/net10.0/Microsoft.JSInterop.WebAssembly.dll": {
+            "assemblyVersion": "10.0.11.0",
+            "fileVersion": "10.0.1126.37416"
+          }
+        }
+      },
+      "HotelBlazor.Client/1.0.0": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly": "10.0.11"
+        },
+        "runtime": {
+          "HotelBlazor.Client.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "HotelBlazor/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly/10.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OaZ+pEJzfejOtCkmepeJYYItNu3PA6Y2EajBwS8vr30mUjCOZWjVCr2sCqUOVw7D6+wmJwpNKtHqyzbtX/F7qQ==",
+      "path": "microsoft.aspnetcore.components.webassembly/10.0.11",
+      "hashPath": "microsoft.aspnetcore.components.webassembly.10.0.11.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly.Server/10.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-El0lkzjqwWVKmFC4tS0orMxysMNwElGNM1lLNYyqBh8SLsP5c+EDDrZS4FAv0bcqc+t1nxosnzqrd0ob+XASPQ==",
+      "path": "microsoft.aspnetcore.components.webassembly.server/10.0.11",
+      "hashPath": "microsoft.aspnetcore.components.webassembly.server.10.0.11.nupkg.sha512"
+    },
+    "Microsoft.JSInterop.WebAssembly/10.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-WtlvldXFOdft4tFW4Y3lTnRqZfGYebOBPMXZAy9Yp3gv0A88rNbDtXcuoppvqsVWe4cIG95iEXFmXB+nvuEN3Q==",
+      "path": "microsoft.jsinterop.webassembly/10.0.11",
+      "hashPath": "microsoft.jsinterop.webassembly.10.0.11.nupkg.sha512"
+    },
+    "HotelBlazor.Client/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
