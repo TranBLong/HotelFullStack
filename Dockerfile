@@ -3,7 +3,6 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY ["HotelBlazor/HotelBlazor.csproj", "HotelBlazor/"]
-COPY ["HotelBlazor.Client/HotelBlazor.Client.csproj", "HotelBlazor.Client/"]
 RUN dotnet restore "HotelBlazor/HotelBlazor.csproj"
 
 COPY . .

@@ -1,13 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "NhgN40DB9sw=",
+  "dgSpecHash": "5/bjHC0CZrM=",
   "success": true,
   "projectFilePath": "D:\\FileBaiTap\\Ky7\\3tc\\DevOps\\Code\\HotelBlazor\\HotelBlazor\\HotelBlazor.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.11\\microsoft.aspnetcore.app.internal.assets.10.0.11.nupkg.sha512",
-    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly\\10.0.11\\microsoft.aspnetcore.components.webassembly.10.0.11.nupkg.sha512",
-    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly.server\\10.0.11\\microsoft.aspnetcore.components.webassembly.server.10.0.11.nupkg.sha512",
-    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.jsinterop.webassembly\\10.0.11\\microsoft.jsinterop.webassembly.10.0.11.nupkg.sha512"
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.11\\microsoft.aspnetcore.app.internal.assets.10.0.11.nupkg.sha512"
   ],
   "logs": []
 }
