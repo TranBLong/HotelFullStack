@@ -1,0 +1,20 @@
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter, EditorRequired]
+    public AuthenticationState AuthenticationState { get; set; } = null!;
+
+    protected override void OnParametersSet()
+    {
+        var user = AuthenticationState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/access-denied", forceLoad: true);
+            return;
+        }
+
+        var relativeUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var returnUrl = string.IsNullOrEmpty(relativeUrl) ? "/" : $"/{relativeUrl}";
+        Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
+    }
+}

@@ -195,3 +195,14 @@ C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-A-project-build\HotelBlazor.deps.js
 C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-A-project-build\HotelBlazor.runtimeconfig.json
 C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-A-project-build\HotelBlazor.dll
 C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-A-project-build\HotelBlazor.pdb
+D:\FileBaiTap\Ky7\3tc\DevOps\Code\HotelBlazor\HotelBlazor\obj\Debug\net10.0\HotelBlazor.RazorAssemblyInfo.cache
+D:\FileBaiTap\Ky7\3tc\DevOps\Code\HotelBlazor\HotelBlazor\obj\Debug\net10.0\HotelBlazor.RazorAssemblyInfo.cs
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\appsettings.Development.json
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\appsettings.json
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\HotelBlazor.staticwebassets.runtime.json
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\HotelBlazor.staticwebassets.endpoints.json
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\HotelBlazor.exe
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\HotelBlazor.deps.json
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\HotelBlazor.runtimeconfig.json
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\HotelBlazor.dll
+C:\Users\ASUS\AppData\Local\Temp\HotelBlazor-B-build\HotelBlazor.pdb

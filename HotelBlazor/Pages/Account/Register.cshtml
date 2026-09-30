@@ -1,0 +1,55 @@
+@page "/register"
+@model HotelBlazor.Pages.Account.RegisterModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng ký";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - HotelBlazor</title>
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/app.css" />
+</head>
+<body class="bg-body-tertiary">
+    <main class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
+        <section class="card border-0 shadow-sm w-100" style="max-width: 480px;">
+            <div class="card-body p-4 p-md-5">
+                <a class="text-decoration-none fw-semibold text-primary" href="/">HotelBlazor</a>
+                <h1 class="h3 mt-4 mb-2">Tạo tài khoản</h1>
+                <p class="text-secondary mb-4">Đăng ký để tìm và đặt phòng thuận tiện.</p>
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <form method="post">
+                    <div class="mb-3">
+                        <label asp-for="Input.FullName" class="form-label">Họ và tên</label>
+                        <input asp-for="Input.FullName" class="form-control form-control-lg" autocomplete="name" />
+                        <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Email" class="form-label">Email</label>
+                        <input asp-for="Input.Email" class="form-control form-control-lg" autocomplete="email" />
+                        <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Password" class="form-label">Mật khẩu</label>
+                        <input asp-for="Input.Password" class="form-control form-control-lg" autocomplete="new-password" />
+                        <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="Input.ConfirmPassword" class="form-label">Nhập lại mật khẩu</label>
+                        <input asp-for="Input.ConfirmPassword" class="form-control form-control-lg" autocomplete="new-password" />
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Tạo tài khoản</button>
+                </form>
+                <p class="text-center text-secondary mt-4 mb-0">
+                    Đã có tài khoản? <a href="/login" class="link-primary">Đăng nhập</a>
+                </p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

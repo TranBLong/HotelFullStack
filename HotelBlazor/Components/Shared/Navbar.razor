@@ -5,6 +5,23 @@
             <div class="navbar-nav flex-row flex-wrap gap-3">
                 <NavLink class="nav-link px-0" href="/" Match="NavLinkMatch.All">Trang chủ</NavLink>
             </div>
+            <AuthorizeView>
+                <Authorized Context="auth">
+                    <div class="d-flex align-items-center gap-3 ms-auto">
+                        <span class="small text-secondary">@auth.User.Identity?.Name</span>
+                        <form method="post" action="/logout">
+                            <AntiforgeryToken />
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
+                        </form>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <div class="d-flex gap-2 ms-auto">
+                        <a class="btn btn-outline-primary btn-sm" href="/login">Đăng nhập</a>
+                        <a class="btn btn-primary btn-sm" href="/register">Đăng ký</a>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
     </nav>
 </header>

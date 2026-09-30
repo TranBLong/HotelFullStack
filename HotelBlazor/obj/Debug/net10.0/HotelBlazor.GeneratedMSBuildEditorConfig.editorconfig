@@ -35,6 +35,14 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Admin/Dashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxEYXNoYm9hcmQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Customer/Rooms.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDdXN0b21lclxSb29tcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -45,6 +53,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOb3RGb3VuZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Receptionist/Reception.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcUmVjZXB0aW9uLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Weather.razor]
@@ -67,6 +79,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcTmF2YmFyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Shared/RedirectToLogin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcUmVkaXJlY3RUb0xvZ2luLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -82,3 +98,23 @@ build_metadata.AdditionalFiles.CssScope = b-u52kg3qnnb
 [D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Layout/ReconnectModal.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcUmVjb25uZWN0TW9kYWwucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-z27jqmbk5h
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Pages/Account/AccessDenied.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxBY2Nlc3NEZW5pZWQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Pages/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Pages/Account/Logout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxMb2dvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Pages/Account/Register.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxSZWdpc3Rlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Pages/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
