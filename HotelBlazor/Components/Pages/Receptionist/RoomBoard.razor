@@ -1,0 +1,159 @@
+@page "/reception"
+@attribute [Authorize(Roles = Role.ReceptionistOrAdmin)]
+@inject ReceptionService ReceptionService
+@inject ILogger<RoomBoard> Logger
+
+<PageTitle>Sơ đồ phòng - HotelBlazor</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+    <div>
+        <p class="text-primary fw-semibold text-uppercase small mb-2">Vận hành khách sạn</p>
+        <h1 class="display-6 fw-semibold mb-2">Sơ đồ phòng</h1>
+        <p class="text-secondary mb-0">Theo dõi tình trạng phòng và cập nhật trạng thái phục vụ.</p>
+    </div>
+    <a class="btn btn-primary" href="/reception/walk-in">Tạo đơn walk-in</a>
+</div>
+
+@if (IsLoading)
+{
+    <LoadingSpinner Message="Đang tải sơ đồ phòng..." />
+}
+else if (ErrorMessage is not null)
+{
+    <ErrorAlert Message="@ErrorMessage" OnRetry="LoadAsync" />
+}
+else if (Rooms is null || Rooms.Count == 0)
+{
+    <div class="text-center rounded-4 border bg-white py-5 px-3">
+        <h2 class="h4">Chưa có phòng nào</h2>
+        <p class="text-secondary mb-0">Khi phòng được thêm vào hệ thống, chúng sẽ xuất hiện tại đây.</p>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var room in Rooms)
+        {
+            <div class="col-12 col-sm-6 col-xl-4" @key="room.Id">
+                <article class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between gap-3 align-items-start">
+                            <div>
+                                <span class="text-secondary small">@room.RoomType.Name</span>
+                                <h2 class="h4 mb-1">Phòng @room.RoomNumber</h2>
+                            </div>
+                            <span class="badge rounded-pill @GetStatusClass(room.Status)">@GetStatusLabel(room.Status)</span>
+                        </div>
+                        <p class="text-secondary mt-3 mb-3">@room.Description</p>
+                        <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                            <strong>@FormatPrice(room.PricePerNight) <span class="small text-secondary fw-normal">/ đêm</span></strong>
+                            @if (GetNextStatus(room.Status) is { } nextStatus)
+                            {
+                                <button class="btn btn-sm btn-outline-primary"
+                                        disabled="@IsUpdating(room.Id)"
+                                        @onclick="() => ChangeStatusAsync(room.Id, nextStatus)">
+                                    @(IsUpdating(room.Id) ? "Đang lưu..." : GetActionLabel(nextStatus))
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<Room>? Rooms { get; set; }
+    private bool IsLoading { get; set; }
+    private string? ErrorMessage { get; set; }
+    private readonly HashSet<int> UpdatingRoomIds = [];
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        Rooms = null;
+        try
+        {
+            Rooms = await ReceptionService.GetRoomBoardAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải sơ đồ phòng.");
+            ErrorMessage = "Không thể tải sơ đồ phòng. Vui lòng thử lại.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task ChangeStatusAsync(int roomId, RoomStatus status)
+    {
+        if (!UpdatingRoomIds.Add(roomId))
+        {
+            return;
+        }
+
+        ErrorMessage = null;
+        try
+        {
+            await ReceptionService.UpdateRoomStatusAsync(roomId, status);
+            Rooms = await ReceptionService.GetRoomBoardAsync();
+        }
+        catch (ReceptionRequestException exception)
+        {
+            ErrorMessage = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể đổi trạng thái phòng {RoomId}.", roomId);
+            ErrorMessage = "Không thể cập nhật trạng thái phòng. Vui lòng thử lại.";
+        }
+        finally
+        {
+            UpdatingRoomIds.Remove(roomId);
+        }
+    }
+
+    private bool IsUpdating(int roomId) => UpdatingRoomIds.Contains(roomId);
+
+    private static RoomStatus? GetNextStatus(RoomStatus status) => status switch
+    {
+        RoomStatus.Cleaning => RoomStatus.Available,
+        RoomStatus.Available => RoomStatus.Maintenance,
+        RoomStatus.Maintenance => RoomStatus.Available,
+        _ => null
+    };
+
+    private static string GetActionLabel(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => "Đánh dấu sẵn sàng",
+        RoomStatus.Maintenance => "Bảo trì",
+        _ => string.Empty
+    };
+
+    private static string GetStatusClass(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => "text-bg-success",
+        RoomStatus.Occupied => "text-bg-primary",
+        RoomStatus.Cleaning => "text-bg-warning",
+        RoomStatus.Maintenance => "text-bg-danger",
+        _ => "text-bg-secondary"
+    };
+
+    private static string GetStatusLabel(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => "Trống",
+        RoomStatus.Occupied => "Đang ở",
+        RoomStatus.Cleaning => "Đang dọn",
+        RoomStatus.Maintenance => "Bảo trì",
+        _ => "Không xác định"
+    };
+
+    private static string FormatPrice(decimal amount) =>
+        $"{amount.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} ₫";
+}

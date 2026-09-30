@@ -1,0 +1,183 @@
+@page "/reception/walk-in"
+@attribute [Authorize(Roles = Role.ReceptionistOrAdmin)]
+@inject ReceptionService ReceptionService
+@inject ILogger<WalkInBooking> Logger
+
+<PageTitle>Tạo đơn walk-in - HotelBlazor</PageTitle>
+
+<div class="mb-4">
+    <p class="text-primary fw-semibold text-uppercase small mb-2">Đón khách trực tiếp</p>
+    <h1 class="display-6 fw-semibold mb-2">Tạo đơn walk-in</h1>
+    <p class="text-secondary mb-0">Ghi nhận thông tin khách, phòng và thời gian lưu trú.</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-8">
+        <section class="card border-0 shadow-sm">
+            <div class="card-body p-3 p-md-4">
+                @if (IsLoading)
+                {
+                    <LoadingSpinner Message="Đang tải phòng trống..." />
+                }
+                else if (LoadError is not null)
+                {
+                    <ErrorAlert Message="@LoadError" OnRetry="LoadAsync" />
+                }
+                else if (AvailableRooms is null || AvailableRooms.Count == 0)
+                {
+                    <div class="text-center py-4">
+                        <h2 class="h5">Hiện không có phòng trống</h2>
+                        <p class="text-secondary mb-0">Cập nhật sơ đồ phòng hoặc thử lại sau.</p>
+                    </div>
+                }
+                else
+                {
+                    @if (ErrorMessage is not null)
+                    {
+                        <div class="alert alert-danger" role="alert">@ErrorMessage</div>
+                    }
+                    @if (CreatedBooking is not null)
+                    {
+                        <div class="alert alert-success" role="status">
+                            Đã tạo đơn walk-in <strong>#@CreatedBooking.Id</strong> cho @CreatedBooking.GuestName.
+                            Tổng tiền <strong>@FormatPrice(CreatedBooking.TotalAmount)</strong>; trạng thái đã xác nhận.
+                        </div>
+                    }
+
+                    <EditForm Model="Input" OnValidSubmit="CreateAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger small mb-3" />
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="guest-name">Tên khách</label>
+                                <InputText id="guest-name" class="form-control" @bind-Value="Input.GuestName" />
+                                <ValidationMessage For="@(() => Input.GuestName)" class="text-danger small" />
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="guest-phone">Số điện thoại</label>
+                                <InputText id="guest-phone" class="form-control" autocomplete="tel" @bind-Value="Input.GuestPhone" />
+                                <ValidationMessage For="@(() => Input.GuestPhone)" class="text-danger small" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="walk-in-room">Phòng</label>
+                                <InputSelect id="walk-in-room" class="form-select" @bind-Value="Input.RoomId">
+                                    <option value="0">Chọn phòng</option>
+                                    @foreach (var room in AvailableRooms)
+                                    {
+                                        <option value="@room.Id">Phòng @room.RoomNumber — @FormatPrice(room.PricePerNight) / đêm</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Input.RoomId)" class="text-danger small" />
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="walk-in-check-in">Ngày nhận phòng</label>
+                                <InputDate id="walk-in-check-in" class="form-control" @bind-Value="Input.CheckIn" />
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="walk-in-check-out">Ngày trả phòng</label>
+                                <InputDate id="walk-in-check-out" class="form-control" @bind-Value="Input.CheckOut" />
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-lg w-100" disabled="@IsSubmitting">
+                                    @(IsSubmitting ? "Đang tạo đơn..." : "Tạo đơn đã xác nhận")
+                                </button>
+                            </div>
+                        </div>
+                    </EditForm>
+                }
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<Room>? AvailableRooms { get; set; }
+    private bool IsLoading { get; set; }
+    private bool IsSubmitting { get; set; }
+    private string? LoadError { get; set; }
+    private string? ErrorMessage { get; set; }
+    private Booking? CreatedBooking { get; set; }
+    private WalkInInput Input { get; set; } = WalkInInput.CreateDefault();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        LoadError = null;
+        AvailableRooms = null;
+        try
+        {
+            AvailableRooms = await ReceptionService.GetAvailableRoomsAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải phòng trống cho đơn walk-in.");
+            LoadError = "Không thể tải danh sách phòng. Vui lòng thử lại.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        ErrorMessage = null;
+        CreatedBooking = null;
+        IsSubmitting = true;
+        try
+        {
+            CreatedBooking = await ReceptionService.CreateWalkInAsync(
+                Input.GuestName,
+                Input.GuestPhone,
+                Input.RoomId,
+                Input.CheckIn,
+                Input.CheckOut);
+            await LoadAsync();
+            Input = WalkInInput.CreateDefault();
+        }
+        catch (ReceptionRequestException exception)
+        {
+            ErrorMessage = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tạo đơn walk-in cho phòng {RoomId}.", Input.RoomId);
+            ErrorMessage = "Không thể tạo đơn walk-in. Vui lòng thử lại.";
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private static string FormatPrice(decimal amount) =>
+        $"{amount.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} ₫";
+
+    private sealed class WalkInInput
+    {
+        [Required(ErrorMessage = "Vui lòng nhập tên khách.")]
+        [StringLength(120, ErrorMessage = "Tên khách không được vượt quá 120 ký tự.")]
+        public string GuestName { get; set; } = string.Empty;
+
+        [StringLength(30, ErrorMessage = "Số điện thoại không được vượt quá 30 ký tự.")]
+        public string? GuestPhone { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn phòng.")]
+        public int RoomId { get; set; }
+
+        public DateOnly CheckIn { get; set; }
+        public DateOnly CheckOut { get; set; }
+
+        public static WalkInInput CreateDefault()
+        {
+            var checkIn = DateOnly.FromDateTime(DateTime.Today);
+            return new WalkInInput
+            {
+                CheckIn = checkIn,
+                CheckOut = checkIn.AddDays(1)
+            };
+        }
+    }
+}

@@ -8,6 +8,11 @@
                     <NavLink class="nav-link px-0" href="/rooms">Phòng</NavLink>
                     <NavLink class="nav-link px-0" href="/my-bookings">Đơn của tôi</NavLink>
                 </AuthorizeView>
+                <AuthorizeView Roles="@Role.ReceptionistOrAdmin">
+                    <NavLink class="nav-link px-0" href="/reception">Lễ tân</NavLink>
+                    <NavLink class="nav-link px-0" href="/reception/walk-in">Khách vãng lai</NavLink>
+                    <NavLink class="nav-link px-0" href="/reception/bookings">Hàng chờ đơn</NavLink>
+                </AuthorizeView>
             </div>
             <AuthorizeView>
                 <Authorized Context="auth">

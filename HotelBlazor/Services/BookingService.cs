@@ -56,9 +56,19 @@ public sealed class BookingService
             throw new BookingRequestException("Phòng vừa được đặt trong khoảng ngày này. Vui lòng tìm phòng khác.");
         }
 
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(candidate => candidate.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            throw new BookingRequestException("Không tìm thấy tài khoản đặt phòng.");
+        }
+
         var booking = new Booking
         {
-            CustomerId = userId,
+            UserId = userId,
+            GuestName = user.FullName ?? user.Email ?? user.UserName ?? userId,
+            GuestPhone = user.PhoneNumber,
             RoomId = roomId,
             CheckIn = checkIn,
             CheckOut = checkOut,
@@ -106,7 +116,7 @@ public sealed class BookingService
             .AsNoTracking()
             .Include(booking => booking.Room)
             .ThenInclude(room => room.RoomType)
-            .Where(booking => booking.CustomerId == userId)
+            .Where(booking => booking.UserId == userId)
             .OrderByDescending(booking => booking.CreatedAtUtc)
             .ToListAsync(cancellationToken);
     }
@@ -121,7 +131,7 @@ public sealed class BookingService
         var booking = await _dbContext.Bookings
             .SingleOrDefaultAsync(candidate => candidate.Id == bookingId, cancellationToken);
 
-        if (booking is null || booking.CustomerId != userId)
+        if (booking is null || booking.UserId != userId)
         {
             throw new BookingRequestException("Không tìm thấy đơn đặt phòng của bạn.");
         }

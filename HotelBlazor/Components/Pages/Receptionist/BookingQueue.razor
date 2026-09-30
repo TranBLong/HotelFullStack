@@ -1,0 +1,242 @@
+@page "/reception/bookings"
+@attribute [Authorize(Roles = Role.ReceptionistOrAdmin)]
+@inject ReceptionService ReceptionService
+@inject ILogger<BookingQueue> Logger
+
+<PageTitle>Hàng chờ đơn - HotelBlazor</PageTitle>
+
+<div class="mb-4">
+    <p class="text-primary fw-semibold text-uppercase small mb-2">Điều phối lưu trú</p>
+    <h1 class="display-6 fw-semibold mb-2">Hàng chờ đơn đặt phòng</h1>
+    <p class="text-secondary mb-0">Duyệt yêu cầu mới và xử lý khách đến hoặc trả phòng.</p>
+</div>
+
+@if (ErrorMessage is not null)
+{
+    <ErrorAlert Message="@ErrorMessage" OnRetry="LoadAsync" />
+}
+
+<section class="mb-5">
+    <h2 class="h4 mb-3">Đơn chờ xác nhận</h2>
+    @if (IsLoading)
+    {
+        <LoadingSpinner Message="Đang tải đơn chờ..." />
+    }
+    else if (PendingBookings is null)
+    {
+        <ErrorAlert Message="Chưa tải được danh sách đơn chờ." OnRetry="LoadAsync" />
+    }
+    else if (PendingBookings.Count == 0)
+    {
+        <div class="rounded-4 border bg-white text-center py-4 px-3">
+            <h3 class="h5">Không có đơn đang chờ</h3>
+            <p class="text-secondary mb-0">Các yêu cầu mới sẽ hiển thị tại đây.</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var booking in PendingBookings)
+            {
+                <article class="card border-0 shadow-sm" @key="booking.Id">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-12 col-lg">
+                                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                                    <h3 class="h5 mb-0">Đơn #@booking.Id · Phòng @booking.Room.RoomNumber</h3>
+                                    <span class="badge text-bg-warning">Chờ xác nhận</span>
+                                </div>
+                                <p class="mb-1"><strong>@booking.GuestName</strong>@if (!string.IsNullOrWhiteSpace(booking.GuestPhone)) { <span class="text-secondary"> · @booking.GuestPhone</span> }</p>
+                                <p class="text-secondary mb-1">@booking.Room.RoomType.Name · @booking.CheckIn.ToString("dd/MM/yyyy") – @booking.CheckOut.ToString("dd/MM/yyyy")</p>
+                                <strong>@FormatPrice(booking.TotalAmount)</strong>
+                            </div>
+                            <div class="col-12 col-lg-5">
+                                <label class="form-label small" for="@($"reject-{booking.Id}")">Lý do từ chối (nếu từ chối)</label>
+                                <input id="@($"reject-{booking.Id}")"
+                                       class="form-control mb-2"
+                                       placeholder="Nhập lý do từ chối"
+                                       @bind="RejectionReasons[booking.Id]" />
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button"
+                                            class="btn btn-primary flex-fill"
+                                            disabled="@IsBusy(booking.Id)"
+                                            @onclick="() => ConfirmAsync(booking.Id)">
+                                        @(IsBusy(booking.Id) ? "Đang xử lý..." : "Duyệt đơn")
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-outline-danger flex-fill"
+                                            disabled="@(IsBusy(booking.Id) || string.IsNullOrWhiteSpace(RejectionReasons[booking.Id]))"
+                                            @onclick="() => RejectAsync(booking.Id)">
+                                        Từ chối
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+<section>
+    <h2 class="h4 mb-3">Đơn đã xác nhận / đang lưu trú</h2>
+    @if (IsLoading)
+    {
+        <LoadingSpinner Message="Đang tải các đơn đang hoạt động..." />
+    }
+    else if (ActiveBookings is null)
+    {
+        <ErrorAlert Message="Chưa tải được danh sách đơn đang hoạt động." OnRetry="LoadAsync" />
+    }
+    else if (ActiveBookings.Count == 0)
+    {
+        <div class="rounded-4 border bg-white text-center py-4 px-3">
+            <h3 class="h5">Không có đơn đang hoạt động</h3>
+            <p class="text-secondary mb-0">Đơn đã xác nhận hoặc khách đang lưu trú sẽ hiển thị tại đây.</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var booking in ActiveBookings)
+            {
+                <article class="card border-0 shadow-sm" @key="booking.Id">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="row g-3 align-items-center">
+                            <div class="col">
+                                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                                    <h3 class="h5 mb-0">Đơn #@booking.Id · Phòng @booking.Room.RoomNumber</h3>
+                                    <span class="badge rounded-pill @GetStatusClass(booking.Status)">@GetStatusLabel(booking.Status)</span>
+                                </div>
+                                <p class="mb-1"><strong>@booking.GuestName</strong>@if (!string.IsNullOrWhiteSpace(booking.GuestPhone)) { <span class="text-secondary"> · @booking.GuestPhone</span> }</p>
+                                <p class="text-secondary mb-1">@booking.CheckIn.ToString("dd/MM/yyyy") – @booking.CheckOut.ToString("dd/MM/yyyy")</p>
+                                <strong>@FormatPrice(booking.TotalAmount)</strong>
+                            </div>
+                            @if (booking.Status == BookingStatus.Confirmed)
+                            {
+                                <div class="col-12 col-md-auto">
+                                    <button class="btn btn-success w-100"
+                                            disabled="@IsBusy(booking.Id)"
+                                            @onclick="() => CheckInAsync(booking.Id)">
+                                        @(IsBusy(booking.Id) ? "Đang xử lý..." : "Check-in")
+                                    </button>
+                                </div>
+                            }
+                            else if (booking.Status == BookingStatus.CheckedIn)
+                            {
+                                <div class="col-12 col-md-auto">
+                                    <button class="btn btn-outline-primary w-100"
+                                            disabled="@IsBusy(booking.Id)"
+                                            @onclick="() => CheckOutAsync(booking.Id)">
+                                        @(IsBusy(booking.Id) ? "Đang xử lý..." : "Check-out")
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<Booking>? PendingBookings { get; set; }
+    private IReadOnlyList<Booking>? ActiveBookings { get; set; }
+    private readonly Dictionary<int, string> RejectionReasons = [];
+    private readonly HashSet<int> BusyBookingIds = [];
+    private bool IsLoading { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        PendingBookings = null;
+        ActiveBookings = null;
+        try
+        {
+            PendingBookings = await ReceptionService.GetPendingBookingsAsync();
+            foreach (var booking in PendingBookings)
+            {
+                RejectionReasons.TryAdd(booking.Id, string.Empty);
+            }
+
+            ActiveBookings = await ReceptionService.GetActiveBookingsAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải hàng chờ đặt phòng.");
+            ErrorMessage = "Không thể tải danh sách đơn. Vui lòng thử lại.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private Task ConfirmAsync(int bookingId) =>
+        RunActionAsync(bookingId, () => ReceptionService.ConfirmAsync(bookingId));
+
+    private Task RejectAsync(int bookingId)
+    {
+        RejectionReasons.TryGetValue(bookingId, out var reason);
+        return RunActionAsync(bookingId, () => ReceptionService.RejectAsync(bookingId, reason ?? string.Empty));
+    }
+
+    private Task CheckInAsync(int bookingId) =>
+        RunActionAsync(bookingId, () => ReceptionService.CheckInAsync(bookingId));
+
+    private Task CheckOutAsync(int bookingId) =>
+        RunActionAsync(bookingId, () => ReceptionService.CheckOutAsync(bookingId));
+
+    private async Task RunActionAsync(int bookingId, Func<Task> operation)
+    {
+        if (!BusyBookingIds.Add(bookingId))
+        {
+            return;
+        }
+
+        ErrorMessage = null;
+        try
+        {
+            await operation();
+            await LoadAsync();
+        }
+        catch (ReceptionRequestException exception)
+        {
+            ErrorMessage = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể xử lý đơn {BookingId}.", bookingId);
+            ErrorMessage = "Không thể cập nhật đơn. Vui lòng thử lại.";
+        }
+        finally
+        {
+            BusyBookingIds.Remove(bookingId);
+        }
+    }
+
+    private bool IsBusy(int bookingId) => BusyBookingIds.Contains(bookingId);
+
+    private static string GetStatusClass(BookingStatus status) => status switch
+    {
+        BookingStatus.Confirmed => "text-bg-primary",
+        BookingStatus.CheckedIn => "text-bg-success",
+        _ => "text-bg-secondary"
+    };
+
+    private static string GetStatusLabel(BookingStatus status) => status switch
+    {
+        BookingStatus.Confirmed => "Đã xác nhận",
+        BookingStatus.CheckedIn => "Đang lưu trú",
+        _ => "Không xác định"
+    };
+
+    private static string FormatPrice(decimal amount) =>
+        $"{amount.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} ₫";
+}

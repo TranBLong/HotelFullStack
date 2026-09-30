@@ -42,6 +42,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataPro
 
         builder.Entity<Booking>(entity =>
         {
+            entity.Property(booking => booking.GuestName).HasMaxLength(120).IsRequired();
+            entity.Property(booking => booking.GuestPhone).HasMaxLength(30);
             entity.Property(booking => booking.TotalAmount).HasPrecision(18, 2);
             entity.Property(booking => booking.Status).HasConversion<string>().HasMaxLength(20);
             entity.Property(booking => booking.RejectionReason).HasMaxLength(1000);
@@ -49,9 +51,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataPro
                 .WithMany(room => room.Bookings)
                 .HasForeignKey(booking => booking.RoomId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(booking => booking.Customer)
-                .WithMany(customer => customer.Bookings)
-                .HasForeignKey(booking => booking.CustomerId)
+            entity.HasOne(booking => booking.User)
+                .WithMany(user => user.Bookings)
+                .HasForeignKey(booking => booking.UserId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

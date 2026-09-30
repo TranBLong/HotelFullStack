@@ -37,6 +37,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<RoomService>();
 builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<ReceptionService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

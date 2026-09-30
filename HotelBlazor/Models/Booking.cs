@@ -3,8 +3,10 @@ namespace HotelBlazor.Models;
 public class Booking
 {
     public int Id { get; set; }
-    public string CustomerId { get; set; } = string.Empty;
-    public ApplicationUser Customer { get; set; } = null!;
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+    public string GuestName { get; set; } = string.Empty;
+    public string? GuestPhone { get; set; }
     public int RoomId { get; set; }
     public Room Room { get; set; } = null!;
     public DateOnly CheckIn { get; set; }
