@@ -24,7 +24,7 @@
     }
     else if (PendingBookings is null)
     {
-        <ErrorAlert Message="Chưa tải được danh sách đơn chờ." OnRetry="LoadAsync" />
+        @* Lỗi đã hiển thị ở đầu trang *@
     }
     else if (PendingBookings.Count == 0)
     {
@@ -53,9 +53,10 @@
                             <div class="col-12 col-lg-5">
                                 <label class="form-label small" for="@($"reject-{booking.Id}")">Lý do từ chối (nếu từ chối)</label>
                                 <input id="@($"reject-{booking.Id}")"
-                                       class="form-control mb-2"
-                                       placeholder="Nhập lý do từ chối"
-                                       @bind="RejectionReasons[booking.Id]" />
+                                    class="form-control mb-2"
+                                    placeholder="Nhập lý do từ chối"
+                                    @bind="RejectionReasons[booking.Id]"
+                                    @bind:event="oninput" />
                                 <div class="d-flex flex-wrap gap-2">
                                     <button type="button"
                                             class="btn btn-primary flex-fill"
@@ -87,7 +88,7 @@
     }
     else if (ActiveBookings is null)
     {
-        <ErrorAlert Message="Chưa tải được danh sách đơn đang hoạt động." OnRetry="LoadAsync" />
+        @* Lỗi đã hiển thị ở đầu trang *@
     }
     else if (ActiveBookings.Count == 0)
     {
