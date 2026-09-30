@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HotelBlazor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1e001da36275d42f6313387659e88d2246468cc9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+baafa6c68cddc83705092af43df99f410b88aedd")]
 [assembly: System.Reflection.AssemblyProductAttribute("HotelBlazor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HotelBlazor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
