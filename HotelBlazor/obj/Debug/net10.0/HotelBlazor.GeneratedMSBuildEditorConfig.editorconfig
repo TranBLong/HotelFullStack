@@ -55,6 +55,18 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Shared/ErrorAlert.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcRXJyb3JBbGVydC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Shared/LoadingSpinner.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcTG9hZGluZ1NwaW5uZXIucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Shared/Navbar.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcTmF2YmFyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 

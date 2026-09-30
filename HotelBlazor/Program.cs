@@ -1,39 +1,52 @@
 using HotelBlazor.Components;
-using HotelBlazor.Data; // Thay bằng namespace DbContext của bạn
+using HotelBlazor.Data;
+using HotelBlazor.Models;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Cấu hình chuỗi kết nối PostgreSQL (phải nằm trước builder.Build())
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Cấu hình ConnectionStrings:DefaultConnection chưa được đặt.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// 2. Cấu hình Blazor Interactive Server
+builder.Services
+    .AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/login";
+    options.AccessDeniedPath = "/access-denied";
+});
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<ApplicationDbContext>();
+builder.Services.AddHealthChecks();
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-// =========================================================
-// BUILD APPLICATION
-// =========================================================
-var app = builder.Build(); 
 
-// 2. ĐẶT ĐOẠN CODE CỦA BẠN NGAY TẠI ĐÂY (Trước khi ứng dụng lắng nghe request)
-using (var scope = app.Services.CreateScope())
+var app = builder.Build();
+
+if (app.Environment.IsProduction())
 {
-    var services = scope.ServiceProvider;
-    var dbContext = services.GetRequiredService<ApplicationDbContext>();
-
-    // Tự động áp dụng Migration vào PostgreSQL
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await dbContext.Database.MigrateAsync();
-
-    // Lấy thông tin Seed Admin từ Configuration
-    var adminEmail = app.Configuration["ADMIN_EMAIL"];
-    var adminPassword = app.Configuration["ADMIN_PASSWORD"];
-
-    // Logic kiểm tra và dùng UserManager/PasswordHasher để tạo tài khoản Admin
 }
 
-// 3. Cấu hình HTTP Request Pipeline & Routing
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("HotelBlazor.Data.DbInitializer");
+    await DbInitializer.InitializeAsync(scope.ServiceProvider, logger);
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -42,9 +55,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.Run();

@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v10.0": {
       "HotelBlazor/1.0.0": {
         "dependencies": {
+          "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "10.0.12",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "10.0.12",
           "Microsoft.EntityFrameworkCore.Design": "10.0.12",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.3"
@@ -21,6 +22,17 @@
           "lib/net6.0/Humanizer.dll": {
             "assemblyVersion": "2.14.0.0",
             "fileVersion": "2.14.1.48190"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore/10.0.12": {
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "10.0.12"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.dll": {
+            "assemblyVersion": "10.0.12.0",
+            "fileVersion": "10.0.1226.42308"
           }
         }
       },
@@ -502,6 +514,13 @@
       "sha512": "sha512-lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw==",
       "path": "humanizer.core/2.14.1",
       "hashPath": "humanizer.core.2.14.1.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore/10.0.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-oV5g+PWxCFI3liFQcRNNEhYeS8Jz9+rcjREPDRK8kk0a1q+sf8UUlyFwGCBbxWoNVPpenljm8WEUVCH10k71Bw==",
+      "path": "microsoft.aspnetcore.dataprotection.entityframeworkcore/10.0.12",
+      "hashPath": "microsoft.aspnetcore.dataprotection.entityframeworkcore.10.0.12.nupkg.sha512"
     },
     "Microsoft.AspNetCore.Identity.EntityFrameworkCore/10.0.12": {
       "type": "package",

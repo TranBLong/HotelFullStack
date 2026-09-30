@@ -1,0 +1,18 @@
+<div class="alert alert-danger d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3"
+     role="alert">
+    <span>@Message</span>
+    @if (OnRetry.HasDelegate)
+    {
+        <button type="button" class="btn btn-outline-danger flex-shrink-0" @onclick="OnRetry">
+            Thử lại
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Message { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnRetry { get; set; }
+}
