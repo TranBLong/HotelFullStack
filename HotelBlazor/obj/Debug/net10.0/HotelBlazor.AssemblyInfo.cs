@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("9d3c4e76-4668-481d-87b9-1d47360efd1c")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("HotelBlazor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+baafa6c68cddc83705092af43df99f410b88aedd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+18cdabe8061977292f270c1032ad896c83ab20f5")]
 [assembly: System.Reflection.AssemblyProductAttribute("HotelBlazor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HotelBlazor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
