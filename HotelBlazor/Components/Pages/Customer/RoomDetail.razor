@@ -1,0 +1,201 @@
+@page "/rooms/{Id:int}"
+@attribute [Authorize(Roles = Role.Customer)]
+@inject RoomService RoomService
+@inject BookingService BookingService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<RoomDetail> Logger
+
+<PageTitle>Chi tiết phòng - HotelBlazor</PageTitle>
+
+@if (IsLoading)
+{
+    <LoadingSpinner Message="Đang tải thông tin phòng..." />
+}
+else if (ErrorMessage is not null)
+{
+    <ErrorAlert Message="@ErrorMessage" OnRetry="LoadAsync" />
+}
+else if (Room is null)
+{
+    <div class="text-center rounded-4 border bg-white py-5 px-3">
+        <h1 class="h4">Không tìm thấy phòng này</h1>
+        <p class="text-secondary">Có thể phòng đã bị gỡ hoặc đường dẫn không còn hợp lệ.</p>
+        <a href="/rooms" class="btn btn-primary">Quay lại tìm phòng</a>
+    </div>
+}
+else
+{
+    <a href="/rooms" class="link-secondary text-decoration-none">&larr; Quay lại danh sách phòng</a>
+    <div class="row g-4 mt-1">
+        <div class="col-12 col-lg-7">
+            <section class="rounded-4 bg-primary-subtle p-4 p-md-5 h-100">
+                <span class="badge text-bg-primary mb-3">@Room.RoomType.Name</span>
+                <h1 class="display-6 fw-semibold">Phòng @Room.RoomNumber</h1>
+                <p class="lead text-secondary">@Room.Description</p>
+                <div class="row g-3 mt-4">
+                    <div class="col-6">
+                        <div class="bg-white rounded-3 p-3 h-100">
+                            <span class="small text-secondary d-block">Sức chứa</span>
+                            <strong>Tối đa @Room.RoomType.Capacity khách</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-white rounded-3 p-3 h-100">
+                            <span class="small text-secondary d-block">Giá mỗi đêm</span>
+                            <strong>@FormatPrice(Room.PricePerNight)</strong>
+                        </div>
+                    </div>
+                </div>
+                @if (Room.Status != RoomStatus.Available)
+                {
+                    <div class="alert alert-warning mt-4 mb-0">Phòng hiện chưa sẵn sàng để đặt.</div>
+                }
+            </section>
+        </div>
+        <div class="col-12 col-lg-5">
+            <section class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h4">Đặt phòng</h2>
+                    <p class="text-secondary">Đơn sẽ ở trạng thái chờ xác nhận sau khi gửi.</p>
+                    @if (BookingError is not null)
+                    {
+                        <div class="alert alert-danger" role="alert">@BookingError</div>
+                    }
+                    @if (BookingNumber.HasValue)
+                    {
+                        <div class="alert alert-success" role="status">
+                            Đặt phòng thành công. Mã đơn của bạn là <strong>#@BookingNumber</strong>.
+                            Tổng tiền: <strong>@FormatPrice(BookingAmount)</strong>.
+                        </div>
+                    }
+
+                    <EditForm Model="BookingInput" OnValidSubmit="SubmitBookingAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger small mb-3" />
+                        <div class="mb-3">
+                            <label class="form-label" for="detail-check-in">Ngày nhận phòng</label>
+                            <InputDate id="detail-check-in" class="form-control" @bind-Value="BookingInput.CheckIn" />
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label" for="detail-check-out">Ngày trả phòng</label>
+                            <InputDate id="detail-check-out" class="form-control" @bind-Value="BookingInput.CheckOut" />
+                        </div>
+                        <button type="submit"
+                                class="btn btn-primary btn-lg w-100"
+                                disabled="@(IsSubmitting || Room.Status != RoomStatus.Available)">
+                            @if (IsSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                <span>Đang gửi...</span>
+                            }
+                            else
+                            {
+                                <span>Gửi yêu cầu đặt phòng</span>
+                            }
+                        </button>
+                    </EditForm>
+                </div>
+            </section>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Room? Room { get; set; }
+    private bool IsLoading { get; set; }
+    private bool IsSubmitting { get; set; }
+    private string? ErrorMessage { get; set; }
+    private string? BookingError { get; set; }
+    private int? BookingNumber { get; set; }
+    private decimal BookingAmount { get; set; }
+    private BookingInputModel BookingInput { get; set; } = BookingInputModel.CreateDefault();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        BookingInput = BookingInputModel.CreateDefault();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        Room = null;
+
+        try
+        {
+            Room = await RoomService.GetByIdAsync(Id);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải chi tiết phòng {RoomId}.", Id);
+            ErrorMessage = "Không thể tải thông tin phòng. Vui lòng thử lại.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task SubmitBookingAsync()
+    {
+        BookingError = null;
+        BookingNumber = null;
+        IsSubmitting = true;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authenticationState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                BookingError = "Không xác định được tài khoản. Vui lòng đăng nhập lại.";
+                return;
+            }
+
+            var booking = await BookingService.CreateAsync(
+                Id,
+                userId,
+                BookingInput.CheckIn,
+                BookingInput.CheckOut);
+
+            BookingNumber = booking.Id;
+            BookingAmount = booking.TotalAmount;
+        }
+        catch (BookingRequestException exception)
+        {
+            BookingError = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tạo booking cho phòng {RoomId}.", Id);
+            BookingError = "Không thể gửi yêu cầu đặt phòng. Vui lòng thử lại.";
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private static string FormatPrice(decimal amount) =>
+        $"{amount.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} ₫";
+
+    private sealed class BookingInputModel
+    {
+        public DateOnly CheckIn { get; set; }
+        public DateOnly CheckOut { get; set; }
+
+        public static BookingInputModel CreateDefault()
+        {
+            var checkIn = DateOnly.FromDateTime(DateTime.Today).AddDays(1);
+            return new BookingInputModel
+            {
+                CheckIn = checkIn,
+                CheckOut = checkIn.AddDays(1)
+            };
+        }
+    }
+}

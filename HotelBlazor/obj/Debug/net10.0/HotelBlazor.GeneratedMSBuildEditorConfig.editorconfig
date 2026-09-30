@@ -39,8 +39,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxEYXNoYm9hcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Customer/Rooms.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDdXN0b21lclxSb29tcy5yYXpvcg==
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Customer/BookingHistory.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDdXN0b21lclxCb29raW5nSGlzdG9yeS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Customer/RoomDetail.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDdXN0b21lclxSb29tRGV0YWlsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Customer/RoomSearch.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDdXN0b21lclxSb29tU2VhcmNoLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/FileBaiTap/Ky7/3tc/DevOps/Code/HotelBlazor/HotelBlazor/Components/Pages/Error.razor]

@@ -4,6 +4,10 @@
             <a class="navbar-brand fw-semibold text-primary" href="/">HotelBlazor</a>
             <div class="navbar-nav flex-row flex-wrap gap-3">
                 <NavLink class="nav-link px-0" href="/" Match="NavLinkMatch.All">Trang chủ</NavLink>
+                <AuthorizeView Roles="@Role.Customer">
+                    <NavLink class="nav-link px-0" href="/rooms">Phòng</NavLink>
+                    <NavLink class="nav-link px-0" href="/my-bookings">Đơn của tôi</NavLink>
+                </AuthorizeView>
             </div>
             <AuthorizeView>
                 <Authorized Context="auth">

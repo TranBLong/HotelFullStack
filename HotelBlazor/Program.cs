@@ -1,6 +1,7 @@
 using HotelBlazor.Components;
 using HotelBlazor.Data;
 using HotelBlazor.Models;
+using HotelBlazor.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,8 @@ builder.Services.AddHealthChecks();
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddRazorPages();
+builder.Services.AddScoped<RoomService>();
+builder.Services.AddScoped<BookingService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

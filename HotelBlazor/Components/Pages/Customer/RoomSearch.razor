@@ -1,0 +1,197 @@
+@page "/rooms"
+@attribute [Authorize(Roles = Role.Customer)]
+@inject RoomService RoomService
+@inject ILogger<RoomSearch> Logger
+
+<PageTitle>Tìm phòng - HotelBlazor</PageTitle>
+
+<div class="mb-4">
+    <p class="text-primary fw-semibold text-uppercase small mb-2">Kỳ nghỉ tiếp theo của bạn</p>
+    <h1 class="display-6 fw-semibold mb-2">Tìm phòng phù hợp</h1>
+    <p class="text-secondary mb-0">Chọn ngày lưu trú và nhu cầu để xem các phòng còn trống.</p>
+</div>
+
+<section class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3 p-md-4">
+        <EditForm Model="SearchForm" OnValidSubmit="SearchAsync">
+            <DataAnnotationsValidator />
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label class="form-label" for="check-in">Nhận phòng</label>
+                    <InputDate id="check-in" class="form-control" @bind-Value="SearchForm.CheckIn" />
+                </div>
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label class="form-label" for="check-out">Trả phòng</label>
+                    <InputDate id="check-out" class="form-control" @bind-Value="SearchForm.CheckOut" />
+                </div>
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label class="form-label" for="guest-count">Số khách</label>
+                    <InputNumber id="guest-count" class="form-control" @bind-Value="SearchForm.GuestCount" />
+                </div>
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label class="form-label" for="min-price">Giá từ / đêm</label>
+                    <InputNumber id="min-price" class="form-control" @bind-Value="SearchForm.MinPrice" />
+                </div>
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label class="form-label" for="max-price">Giá đến / đêm</label>
+                    <InputNumber id="max-price" class="form-control" @bind-Value="SearchForm.MaxPrice" />
+                </div>
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label class="form-label" for="room-type">Loại phòng</label>
+                    <InputSelect id="room-type" class="form-select" @bind-Value="SearchForm.RoomTypeId">
+                        <option value="">Tất cả loại</option>
+                        @foreach (var roomType in RoomTypes)
+                        {
+                            <option value="@roomType.Id">@roomType.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary px-4" type="submit" disabled="@IsLoading">
+                        Tìm phòng
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</section>
+
+@if (IsLoading)
+{
+    <LoadingSpinner Message="Đang tìm phòng phù hợp..." />
+}
+else if (ErrorMessage is not null)
+{
+    <ErrorAlert Message="@ErrorMessage" OnRetry="RetryAsync" />
+}
+else if (Rooms is null || Rooms.Count == 0)
+{
+    <div class="text-center rounded-4 border bg-white py-5 px-3">
+        <h2 class="h4">Chưa tìm thấy phòng trống</h2>
+        <p class="text-secondary mb-3">Thử điều chỉnh ngày, số khách, loại phòng hoặc khoảng giá.</p>
+        <button class="btn btn-outline-primary" type="button" @onclick="ResetFilters">Xóa bộ lọc giá và loại phòng</button>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-end mb-3">
+        <div>
+            <h2 class="h4 mb-1">Phòng còn trống</h2>
+            <span class="text-secondary">@Rooms.Count lựa chọn phù hợp</span>
+        </div>
+    </div>
+    <div class="row g-3">
+        @foreach (var room in Rooms)
+        {
+            <div class="col-12 col-md-6 col-xl-4" @key="room.Id">
+                <article class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between gap-3 align-items-start mb-3">
+                            <div>
+                                <span class="badge text-bg-primary-subtle text-primary-emphasis mb-2">@room.RoomType.Name</span>
+                                <h3 class="h5 mb-1">Phòng @room.RoomNumber</h3>
+                                <span class="text-secondary small">Tối đa @room.RoomType.Capacity khách</span>
+                            </div>
+                            <span class="badge rounded-pill text-bg-success">Còn trống</span>
+                        </div>
+                        <p class="text-secondary">@room.Description</p>
+                        <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3">
+                            <strong class="text-primary">@FormatPrice(room.PricePerNight)<span class="text-secondary fw-normal small"> / đêm</span></strong>
+                            <a class="btn btn-outline-primary" href="@($"/rooms/{room.Id}")">Xem phòng</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<RoomType> RoomTypes { get; set; } = Array.Empty<RoomType>();
+    private IReadOnlyList<Room>? Rooms { get; set; }
+    private SearchInput SearchForm { get; set; } = SearchInput.CreateDefault();
+    private string? ErrorMessage { get; set; }
+    private bool IsLoading { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task RetryAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task ResetFilters()
+    {
+        SearchForm = SearchInput.CreateDefault(SearchForm.CheckIn, SearchForm.CheckOut, SearchForm.GuestCount);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        Rooms = null;
+
+        try
+        {
+            RoomTypes = await RoomService.GetRoomTypesAsync();
+            Rooms = await RoomService.SearchAvailableAsync(new RoomSearchCriteria
+            {
+                CheckIn = SearchForm.CheckIn,
+                CheckOut = SearchForm.CheckOut,
+                GuestCount = SearchForm.GuestCount,
+                MinPrice = SearchForm.MinPrice,
+                MaxPrice = SearchForm.MaxPrice,
+                RoomTypeId = SearchForm.RoomTypeId
+            });
+        }
+        catch (ArgumentException exception)
+        {
+            ErrorMessage = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải danh sách phòng trống.");
+            ErrorMessage = "Không thể tải danh sách phòng. Vui lòng thử lại.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private static string FormatPrice(decimal amount) =>
+        $"{amount.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} ₫";
+
+    private sealed class SearchInput
+    {
+        public DateOnly CheckIn { get; set; }
+        public DateOnly CheckOut { get; set; }
+        public int GuestCount { get; set; }
+        public decimal? MinPrice { get; set; }
+        public decimal? MaxPrice { get; set; }
+        public int? RoomTypeId { get; set; }
+
+        public static SearchInput CreateDefault(
+            DateOnly? checkIn = null,
+            DateOnly? checkOut = null,
+            int guestCount = 2)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            return new SearchInput
+            {
+                CheckIn = checkIn ?? today.AddDays(1),
+                CheckOut = checkOut ?? today.AddDays(2),
+                GuestCount = guestCount
+            };
+        }
+    }
+}
