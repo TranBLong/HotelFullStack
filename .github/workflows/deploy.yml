@@ -30,7 +30,7 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/hotel-fullstack:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/hotel-fullstack:${{ github.sha }}
 
-      - name: Trigger Render deploy
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+      # - name: Trigger Render deploy
+      #   env:
+      #     RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      #   run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
