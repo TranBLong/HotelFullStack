@@ -1,0 +1,264 @@
+@page "/admin/rooms"
+@attribute [Authorize(Roles = Role.Admin)]
+
+<PageTitle>Quản lý phòng - HotelBlazor</PageTitle>
+<main class="container py-4">
+    <div class="mb-4">
+        <p class="text-uppercase text-primary fw-semibold small mb-1">Quản trị</p>
+        <h1 class="h2 fw-bold mb-1">Quản lý phòng</h1>
+        <p class="text-secondary mb-0">Cập nhật thông tin, giá, loại và trạng thái phòng.</p>
+    </div>
+
+    @if (_notice is not null)
+    {
+        <div class="alert alert-success">@_notice</div>
+    }
+    @if (_operationError is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_operationError</div>
+    }
+
+    <div class="row g-4">
+        <section class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">@(_form.Id == 0 ? "Thêm phòng" : "Chỉnh sửa phòng")</h2>
+                    @if (_roomTypes.Count == 0 && !_loading)
+                    {
+                        <div class="alert alert-warning">Cần tạo loại phòng trước khi thêm phòng. <a href="/admin/room-types">Quản lý loại phòng</a></div>
+                    }
+                    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger small mb-3" />
+                        <div class="mb-3">
+                            <label class="form-label" for="room-number">Số phòng</label>
+                            <InputText id="room-number" class="form-control" @bind-Value="_form.RoomNumber" />
+                            <ValidationMessage For="@(() => _form.RoomNumber)" class="text-danger small" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="room-type">Loại phòng</label>
+                            <InputSelect id="room-type" class="form-select" @bind-Value="_form.RoomTypeId">
+                                <option value="0">Chọn loại phòng</option>
+                                @foreach (var roomType in _roomTypes)
+                                {
+                                    <option value="@roomType.Id">@roomType.Name (@roomType.Capacity khách)</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _form.RoomTypeId)" class="text-danger small" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="room-price">Giá mỗi đêm (₫)</label>
+                            <InputNumber id="room-price" class="form-control" @bind-Value="_form.PricePerNight" />
+                            <ValidationMessage For="@(() => _form.PricePerNight)" class="text-danger small" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="room-status">Trạng thái</label>
+                            <InputSelect id="room-status" class="form-select" @bind-Value="_form.Status">
+                                @foreach (var status in Enum.GetValues<RoomStatus>())
+                                {
+                                    <option value="@status">@GetRoomStatusLabel(status)</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="room-description">Mô tả</label>
+                            <InputTextArea id="room-description" class="form-control" rows="3" @bind-Value="_form.Description" />
+                            <ValidationMessage For="@(() => _form.Description)" class="text-danger small" />
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" disabled="@(_busy || _roomTypes.Count == 0)">
+                                @(_busy ? "Đang xử lý..." : "Lưu phòng")
+                            </button>
+                            @if (_form.Id != 0)
+                            {
+                                <button type="button" class="btn btn-outline-secondary" @onclick="ResetForm" disabled="@_busy">Hủy sửa</button>
+                            }
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </section>
+
+        <section class="col-12 col-lg-8">
+            @if (_loading)
+            {
+                <LoadingSpinner Message="Đang tải danh sách phòng..." />
+            }
+            else if (_loadError is not null)
+            {
+                <ErrorAlert Message="@_loadError" OnRetry="LoadAsync" />
+            }
+            else if (_rooms.Count == 0)
+            {
+                <div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
+                    <h2 class="h5">Chưa có phòng</h2>
+                    <p class="text-secondary mb-0">Dùng biểu mẫu để tạo phòng đầu tiên.</p>
+                </div></div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light"><tr><th>Phòng</th><th>Loại</th><th>Giá/đêm</th><th>Trạng thái</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach (var room in _rooms)
+                                {
+                                    <tr>
+                                        <td><span class="fw-semibold">@room.RoomNumber</span><div class="small text-secondary">@room.Description</div></td>
+                                        <td>@room.RoomType.Name</td>
+                                        <td class="text-nowrap">@room.PricePerNight.ToString("N0") ₫</td>
+                                        <td><span class="badge @GetRoomStatusClass(room.Status)">@GetRoomStatusLabel(room.Status)</span></td>
+                                        <td class="text-nowrap">
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-1" @onclick="() => Edit(room)" disabled="@_busy">Sửa</button>
+                                            @if (_deleteId == room.Id)
+                                            {
+                                                <span class="small me-1">Xác nhận xóa?</span>
+                                                <button type="button" class="btn btn-sm btn-danger me-1" @onclick="() => DeleteAsync(room.Id)" disabled="@_busy">@(_busy ? "Đang xử lý..." : "Đồng ý")</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelDelete" disabled="@_busy">Không</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(room.Id)" disabled="@_busy">Xóa</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+</main>
+
+@code {
+    [Inject] private AdminService AdminService { get; set; } = null!;
+    [Inject] private ILogger<RoomManagement> Logger { get; set; } = null!;
+
+    private IReadOnlyList<Room> _rooms = Array.Empty<Room>();
+    private IReadOnlyList<RoomType> _roomTypes = Array.Empty<RoomType>();
+    private RoomEditModel _form = new();
+    private bool _loading = true;
+    private bool _busy;
+    private int? _deleteId;
+    private string? _loadError;
+    private string? _operationError;
+    private string? _notice;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadError = null;
+        try
+        {
+            _roomTypes = await AdminService.GetRoomTypesAsync();
+            _rooms = await AdminService.GetRoomsAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải dữ liệu quản lý phòng.");
+            _loadError = "Không thể tải danh sách phòng lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _operationError = null;
+        _notice = null;
+        try
+        {
+            await AdminService.SaveRoomAsync(_form);
+            _notice = "Đã lưu thông tin phòng.";
+            ResetForm();
+            await LoadAsync();
+        }
+        catch (AdminOperationException exception)
+        {
+            Logger.LogError(exception, "Không thể lưu phòng {RoomId}.", _form.Id);
+            _operationError = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể lưu phòng {RoomId}.", _form.Id);
+            _operationError = "Không thể lưu phòng lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Edit(Room room)
+    {
+        _form = new RoomEditModel
+        {
+            Id = room.Id,
+            RoomNumber = room.RoomNumber,
+            Description = room.Description,
+            PricePerNight = room.PricePerNight,
+            RoomTypeId = room.RoomTypeId,
+            Status = room.Status
+        };
+        _notice = null;
+        _operationError = null;
+    }
+
+    private void ResetForm() => _form = new RoomEditModel();
+    private void ConfirmDelete(int id) => _deleteId = id;
+    private void CancelDelete() => _deleteId = null;
+
+    private async Task DeleteAsync(int id)
+    {
+        _busy = true;
+        _operationError = null;
+        _notice = null;
+        try
+        {
+            await AdminService.DeleteRoomAsync(id);
+            _deleteId = null;
+            _notice = "Đã xóa phòng.";
+            await LoadAsync();
+        }
+        catch (AdminOperationException exception)
+        {
+            Logger.LogError(exception, "Không thể xóa phòng {RoomId}.", id);
+            _operationError = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể xóa phòng {RoomId}.", id);
+            _operationError = "Không thể xóa phòng lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string GetRoomStatusLabel(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => "Trống",
+        RoomStatus.Occupied => "Đang sử dụng",
+        RoomStatus.Cleaning => "Đang dọn",
+        RoomStatus.Maintenance => "Bảo trì",
+        _ => status.ToString()
+    };
+
+    private static string GetRoomStatusClass(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => "text-bg-success",
+        RoomStatus.Occupied => "text-bg-danger",
+        RoomStatus.Cleaning => "text-bg-warning",
+        RoomStatus.Maintenance => "text-bg-secondary",
+        _ => "text-bg-secondary"
+    };
+}

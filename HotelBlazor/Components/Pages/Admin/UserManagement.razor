@@ -1,0 +1,154 @@
+@page "/admin/users"
+@attribute [Authorize(Roles = Role.Admin)]
+
+<PageTitle>Quản lý tài khoản - HotelBlazor</PageTitle>
+<main class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-primary fw-semibold small mb-1">Quản trị</p>
+            <h1 class="h2 fw-bold mb-1">Quản lý tài khoản</h1>
+            <p class="text-secondary mb-0">Theo dõi vai trò và trạng thái khóa tài khoản.</p>
+        </div>
+        <a class="btn btn-primary" href="/admin/users/create">Tạo tài khoản nhân viên</a>
+    </div>
+
+    @if (_actionMessage is not null)
+    {
+        <div class="alert alert-success">@_actionMessage</div>
+    }
+    @if (_actionError is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_actionError</div>
+    }
+
+    @if (_loading)
+    {
+        <LoadingSpinner Message="Đang tải tài khoản..." />
+    }
+    else if (_loadError is not null)
+    {
+        <ErrorAlert Message="@_loadError" OnRetry="LoadAsync" />
+    }
+    else if (_users.Count == 0)
+    {
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
+            <h2 class="h5">Chưa có tài khoản</h2>
+            <p class="text-secondary mb-0">Danh sách tài khoản hiện đang trống.</p>
+        </div></div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light"><tr><th>Email</th><th>Họ tên</th><th>Vai trò</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                    <tbody>
+                        @foreach (var user in _users)
+                        {
+                            <tr>
+                                <td>@user.Email</td>
+                                <td>@(string.IsNullOrWhiteSpace(user.FullName) ? "—" : user.FullName)</td>
+                                <td><div class="d-flex flex-wrap gap-1">
+                                    @foreach (var role in user.Roles)
+                                    {
+                                        <span class="badge text-bg-light border">@GetRoleLabel(role)</span>
+                                    }
+                                </div></td>
+                                <td>
+                                    <span class="badge @(user.IsLockedOut ? "text-bg-danger" : "text-bg-success")">
+                                        @(user.IsLockedOut ? "Đã khóa" : "Hoạt động")
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (user.Id == _currentUserId)
+                                    {
+                                        <span class="small text-secondary">Tài khoản hiện tại</span>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm @(user.IsLockedOut ? "btn-outline-success" : "btn-outline-danger")"
+                                                disabled="@(_busyUserId is not null)" @onclick="() => ToggleLockoutAsync(user)">
+                                            @(_busyUserId == user.Id ? "Đang xử lý..." : user.IsLockedOut ? "Mở khóa" : "Khóa")
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</main>
+
+@code {
+    [Inject] private AdminService AdminService { get; set; } = null!;
+    [Inject] private ILogger<UserManagement> Logger { get; set; } = null!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+
+    private IReadOnlyList<AdminUserRow> _users = Array.Empty<AdminUserRow>();
+    private string? _currentUserId;
+    private string? _busyUserId;
+    private bool _loading = true;
+    private string? _loadError;
+    private string? _actionError;
+    private string? _actionMessage;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadError = null;
+        try
+        {
+            var state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _currentUserId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            _users = await AdminService.GetUsersAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải danh sách tài khoản.");
+            _loadError = "Không thể tải danh sách tài khoản lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ToggleLockoutAsync(AdminUserRow user)
+    {
+        _busyUserId = user.Id;
+        _actionError = null;
+        _actionMessage = null;
+        try
+        {
+            await AdminService.SetUserLockoutAsync(user.Id, _currentUserId ?? string.Empty, !user.IsLockedOut);
+            _actionMessage = user.IsLockedOut ? "Đã mở khóa tài khoản." : "Đã khóa tài khoản.";
+            await LoadAsync();
+        }
+        catch (AdminOperationException exception)
+        {
+            Logger.LogError(exception, "Không thể đổi trạng thái khóa tài khoản {UserId}.", user.Id);
+            _actionError = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể đổi trạng thái khóa tài khoản {UserId}.", user.Id);
+            _actionError = "Không thể cập nhật tài khoản lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _busyUserId = null;
+        }
+    }
+
+    private static string GetRoleLabel(string role) => role switch
+    {
+        Role.Admin => "Quản trị viên",
+        Role.Receptionist => "Lễ tân",
+        Role.Customer => "Khách hàng",
+        _ => role
+    };
+}

@@ -53,8 +53,8 @@ Các trạng thái đặc thù:
    - Cách kiểm chứng: duyệt → status Confirmed; từ chối → Cancelled + lý do lưu được.
 10. *Cho* Receptionist thực hiện Check-in, *khi* xác nhận, *thì* đơn → `CheckedIn`, phòng → `Occupied`.
     - Cách kiểm chứng: check-in → kiểm tra 2 status đổi đồng thời.
-11. *Cho* Receptionist thực hiện Check-out, *khi* xác nhận, *thì* đơn → `Completed`, phòng → `Cleaning` (hoặc Available tùy logic).
-    - Cách kiểm chứng: check-out → status đúng.
+11. *Cho* Receptionist thực hiện Check-out, *khi* xác nhận, *thì* đơn → `Completed`, phòng → `Cleaning`; lễ tân bấm "Đã dọn xong" thì phòng → `Available`.
+    - Cách kiểm chứng: check-out → phòng Cleaning; bấm "Đã dọn xong" → phòng Available.
 
 ### Admin
 12. *Cho* Admin ở Dashboard, *khi* mở trang, *thì* thấy ít nhất: tổng số phòng, số phòng trống, số đơn Pending, tổng doanh thu dự kiến (từ đơn Confirmed/CheckedIn/Completed).
@@ -65,8 +65,8 @@ Các trạng thái đặc thù:
     - Cách kiểm chứng: khóa → thử login → thất bại.
 
 ### Logic chung
-15. *Cho* bất kỳ thao tác tạo/sửa booking, *khi* khoảng ngày overlap với booking khác (không Cancelled) của cùng phòng, *thì* hệ thống từ chối và báo lỗi.
-    - Cách kiểm chứng: cố đặt trùng ngày → lỗi.
+15. *Cho* bất kỳ thao tác tạo/sửa booking, *khi* khoảng ngày overlap với booking khác có status Pending, Confirmed hoặc CheckedIn của cùng phòng, *thì* hệ thống từ chối và báo lỗi.
+    - Cách kiểm chứng: đặt phòng A ngày 2-4, duyệt, check-in, check-out → khách khác tìm đúng ngày đó vẫn thấy và đặt được phòng A; khi đơn còn Pending/Confirmed/CheckedIn thì không thấy.
 16. *Cho* mọi màn hình danh sách, *khi* API/DB lỗi hoặc mất kết nối, *thì* hiện thông báo lỗi + nút Thử lại, không crash.
     - Cách kiểm chứng: tạm dừng DB hoặc ném exception → UI vẫn ổn định.
 
@@ -78,8 +78,8 @@ Các trạng thái đặc thù:
     - Endpoint `/health` (MapHealthChecks + AllowAnonymous) trả 200, không redirect.
     - Cookie hoạt động đúng nhờ ForwardedHeaders (đã xóa KnownNetworks/KnownProxies) và Data Protection keys lưu DB (hoặc chấp nhận phải login lại sau restart).
     - Cách kiểm chứng: `curl /health` → 200; login → restart container → không lỗi proxy/redirect.
-19. *Cho* deploy lên Render free với SQLite, *khi* redeploy, *thì* dữ liệu demo có thể bị reset (chấp nhận được).
-    - Cách kiểm chứng: tạo dữ liệu → redeploy → kiểm tra dữ liệu mất đúng kỳ vọng đã ghi trong AGENTS.md.
+19. *Cho* deploy lên Render với PostgreSQL, *khi* redeploy, *thì* dữ liệu được giữ nguyên và migration mới (nếu có) được áp dụng tự động lúc khởi động.
+    - Cách kiểm chứng: tạo dữ liệu → redeploy → dữ liệu còn; xem log có dòng migrate.
 20. *Cho* code push lên `main`, *khi* GitHub Actions chạy xong, *thì* image mới xuất hiện trên Docker Hub và Render deploy bản mới (qua Deploy Hook).
     - Cách kiểm chứng: tab Actions xanh, Docker Hub có tag mới, mở URL Render thấy bản mới.
 
@@ -93,7 +93,8 @@ Các trạng thái đặc thù:
 - Trạng thái dùng enum hoặc string constant rõ ràng, không hard-code magic string lung tung.
 - Mọi Service phải async.
 - UI phải responsive cơ bản (mobile + desktop).
-- Không dùng thư viện bên thứ 3 ngoài những gì đã có trong template Blazor mặc định + package đã duyệt (`Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`; Npgsql nếu được duyệt riêng).
+- Không dùng thư viện bên thứ 3 ngoài template Blazor mặc định và các package đã duyệt trong AGENTS.md.
+- Database: PostgreSQL cho cả local và Render.
 - Comment code bằng tiếng Việt ngắn gọn khi cần giải thích logic nghiệp vụ.
 - Production: tự `Database.Migrate()` + seed Admin từ env; ForwardedHeaders (xóa KnownNetworks/KnownProxies); Data Protection keys lưu DB hoặc chấp nhận re-login sau restart.
 - Chỉ dùng GitHub + Docker Hub + Render. Không thêm dịch vụ khác.

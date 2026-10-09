@@ -1,12 +1,23 @@
-# Kế hoạch triển khai HotelFullStack
+Kế hoạch triển khai HotelFullStack
 
-## Vấn đề và hướng tiếp cận
+## Cập nhật trạng thái theo AGENTS.md và SPEC.md mới
 
-Dự án hiện tại đang lệch so với `AGENTS.md` và `SPEC.md`: project server vẫn còn `HotelBlazor.Client` và cấu hình WASM (`AddInteractiveWebAssemblyComponents`, `ProjectReference` tới client), trong khi AGENTS yêu cầu duy nhất sử dụng Blazor Server và bỏ hoàn toàn mô hình Client riêng. Ngoài ra, các thư mục `Data/`, `Models/`, `Services/`, `Pages/` chưa tồn tại trong project server, trong khi `SPEC.md` yêu cầu login/register bằng Razor Page, identity, booking, room management và deploy theo chuẩn Render/Docker.
+- PostgreSQL dùng cho cả local và Render. `DefaultConnection` lấy từ user-secrets ở local / biến môi trường trên Render; không ghi connection string thật vào repo.
+- Chỉ booking `Pending`, `Confirmed`, `CheckedIn` chặn phòng. Điều kiện overlap là `ExistingCheckIn < NewCheckOut AND ExistingCheckOut > NewCheckIn`; `Completed` và `Cancelled` không chặn.
+- Predicate overlap dùng chung giữa tìm phòng và kiểm tra lúc lưu booking online/walk-in.
+- `TotalAmount` được tính và lưu vào booking lúc tạo.
+- Walk-in dùng `UserId = null` và lưu `GuestName` / `GuestPhone`.
+- Check-out chuyển đơn sang `Completed`, phòng sang `Cleaning`; sau thao tác “Đã dọn xong”, phòng chuyển sang `Available`.
+- `dotnet ef database update` chỉ chạy trên database local sau khi giải thích và được duyệt; không chạy lệnh đó trên Render. Production cập nhật schema bằng `Database.Migrate()` lúc khởi động.
+- Trạng thái: A0, A, B, C, D, sửa logic overlap và E đã hoàn thành; F chưa làm.
+
+## Vấn đề tại thời điểm lập kế hoạch ban đầu
+
+Khi kế hoạch được lập, project server còn `HotelBlazor.Client` và cấu hình WASM, và các thư mục nghiệp vụ chưa tồn tại. Các ghi chú bên dưới mô tả baseline lúc đó, không phải trạng thái hiện tại; A0 đến D cùng sửa logic overlap đã hoàn thành.
 
 Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự hợp lý và theo quyết định đã thống nhất: PostgreSQL cho cả local và Render; tách A0 để gỡ toàn bộ WASM; mỗi lát cắt chỉ tập trung vào 1 phần chức năng rõ ràng, đồng thời giữ nguyên tiêu chí SPEC và AGENTS.
 
-## Tình trạng hiện tại đã quét
+## Baseline đã quét trước khi thực hiện
 
 - `HotelBlazor/Program.cs`: đang dùng `AddRazorComponents()` + `AddInteractiveServerComponents()` + `AddInteractiveWebAssemblyComponents()`, và `MapRazorComponents<App>().AddInteractiveWebAssemblyRenderMode()`; đây là cấu hình WASM, không phù hợp với AGENTS.
 - `HotelBlazor.Client/Program.cs`: project client vẫn tồn tại và chạy `WebAssemblyHostBuilder.CreateDefault(args)`, khớp với mô hình WASM.
@@ -15,7 +26,7 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
 - `Dockerfile`: vẫn là template mặc định (build/publish, EXPOSE 80, ENV ASPNETCORE_URLS=http://+:80), chưa có `PORT` runtime, `/health`, `ForwardedHeaders`, Data Protection persist DB như AGENTS yêu cầu.
 - `.github/workflows/deploy.yml`: chỉ build + push Docker image lên Docker Hub, chưa có deploy hook Render và chưa có bước kiểm tra health/production-specific config.
 
-## [THAY ĐỔI] A0 — gỡ `HotelBlazor.Client` và toàn bộ cấu hình WASM, chạy lại được
+## [ĐÃ HOÀN THÀNH] A0 — gỡ `HotelBlazor.Client` và toàn bộ cấu hình WASM, chạy lại được
 
 - File sẽ tạo hoặc sửa:
   - `HotelBlazor/Program.cs`
@@ -30,10 +41,9 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
   - Không còn `ProjectReference` tới `HotelBlazor.Client`.
   - Không còn `AddInteractiveWebAssemblyComponents()` và `AddInteractiveWebAssemblyRenderMode()`.
   - Dự án build/khởi chạy với `Blazor Server` mà không phụ thuộc vào project client.
-- Điểm chưa chắc chắn:
-  - Cần xác nhận cách xoá project `HotelBlazor.Client` khỏi solution mà không phá vỡ cấu trúc repo; chắc chắn phải làm trong bước này trước khi vào business logic.
+- Kết quả: đã gỡ project Client, tham chiếu project, cấu hình WASM và dòng COPY Client trong Dockerfile; solution server-only build thành công.
 
-## [THAY ĐỔI] A — Entity, DbContext, Identity, seed dữ liệu và seed Admin từ biến môi trường
+## [ĐÃ HOÀN THÀNH] A — Entity, DbContext, Identity, seed dữ liệu và seed Admin từ biến môi trường
 
 - File sẽ tạo hoặc sửa:
   - `HotelBlazor/Program.cs`
@@ -58,12 +68,11 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
 - Cách kiểm tra:
   - Kiểm tra `ApplicationDbContext` có `DbSet` đầy đủ và migration khởi tạo đúng.
   - Kiểm tra tài khoản Admin được seed từ `ADMIN_EMAIL` / `ADMIN_PASSWORD` khi thiếu user.
-  - Kiểm tra `Program.cs` có `Database.Migrate()` trong production và `UseForwardedHeaders()` ở nơi thích hợp (đúng nhưng sẽ được rà soát kỹ ở F).
+  - `Database.Migrate()` đã được cấu hình trong Production; ForwardedHeaders thuộc phạm vi rà soát chưa làm ở F.
   - Seed 3 role: `Customer`, `Receptionist`, `Admin`.
-- Điểm chưa chắc chắn:
-  - Cần xác nhận tên exact của `ConnectionStrings` và cách lấy từ `user-secrets` / biến môi trường theo quy định AGENTS; cần thống nhất ngay khi code thực thi.
+- Cấu hình kết nối: `DefaultConnection`, lấy từ user-secrets local hoặc biến môi trường Render.
 
-## [THAY ĐỔI] B — Login/Register bằng Razor Page + redirect theo role
+## [ĐÃ HOÀN THÀNH] B — Login/Register bằng Razor Page + redirect theo role
 
 - File sẽ tạo hoặc sửa:
   - `HotelBlazor/Pages/Account/Login.cshtml` và `.cshtml.cs`
@@ -80,10 +89,9 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
   - Register Customer -> tự đăng nhập và redirect đúng trang Customer.
   - Đăng nhập với Customer/Receptionist/Admin -> redirect theo role.
   - F12 → Application → Cookies có `.AspNetCore.Identity.Application` sau login/register.
-- Điểm chưa chắc chắn:
-  - Cần xác định route đích mặc định cho từng role: Customer -> `/rooms`, Receptionist -> `/reception`, Admin -> `/dashboard` (theo AGENTS) hoặc theo route thực tế khi pages được tạo.
+- Route đích đã chọn: Customer -> `/rooms`, Receptionist -> `/reception`, Admin -> `/dashboard`.
 
-## [THAY ĐỔI] C — Customer: tìm phòng trống, xem chi tiết, đặt phòng, hủy đơn Pending
+## [ĐÃ HOÀN THÀNH] C — Customer: tìm phòng trống, xem chi tiết, đặt phòng, hủy đơn Pending
 
 - File sẽ tạo hoặc sửa:
   - `HotelBlazor/Services/RoomService.cs`
@@ -97,14 +105,13 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
   - 15 (logic overlap)
   - 16 (mọi màn hình danh sách phải có loading/error/empty/data + nút Thử lại)
 - Cách kiểm tra:
-  - Tạo booking đã Confirmed cho phòng A trong khoảng overlap -> phòng A không xuất hiện trong tìm kiếm.
+  - Chỉ booking `Pending`, `Confirmed` hoặc `CheckedIn` có overlap loại phòng khỏi kết quả; `Completed` và `Cancelled` không loại.
   - Đặt 2 đêm với giá 500.000 -> `TotalAmount = 1.000.000` và status `Pending`.
   - Hủy đơn Pending -> status `Cancelled` và phòng trở lại có thể được đặt.
   - Mỗi screen có trạng thái loading, lỗi, rỗng và dữ liệu theo SPEC.
-- Điểm chưa chắc chắn:
-  - `TotalAmount` lưu lúc đặt theo quyết định mới, nên service và UI cần nhất quán; cần xác nhận để không tính nhầm ở nơi khác.
+- Trạng thái quyết định: `TotalAmount` được lưu tại thời điểm đặt.
 
-## [THAY ĐỔI] D — Receptionist: sơ đồ phòng, duyệt/từ chối đơn, check-in/check-out, tạo đơn walk-in
+## [ĐÃ HOÀN THÀNH] D — Receptionist: sơ đồ phòng, duyệt/từ chối đơn, check-in/check-out, tạo đơn walk-in
 
 - File sẽ tạo hoặc sửa:
   - `HotelBlazor/Components/Pages/Receptionist/RoomBoard.razor`
@@ -112,6 +119,7 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
   - `HotelBlazor/Components/Pages/Receptionist/WalkInBooking.razor`
   - `HotelBlazor/Services/ReceptionService.cs`
   - `HotelBlazor/Models/BookingStatus.cs`, `RoomStatus.cs` nếu chưa tạo ở A
+  - `HotelBlazor/Migrations/*AddWalkInBookingFields*` (đã tạo và áp dụng trên database local sau khi được xác nhận)
 - Tiêu chí SPEC tương ứng:
   - 8, 9, 10, 11
   - 16 (loading/error/empty/data cho danh sách đơn)
@@ -119,12 +127,22 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
   - Load sơ đồ phòng -> badge màu theo trạng thái phòng.
   - Duyệt đơn -> `Confirmed`; từ chối -> `Cancelled` + lưu reason.
   - Check-in -> đơn `CheckedIn` và phòng `Occupied` cùng lúc.
-  - Check-out -> đơn `Completed` và phòng `Cleaning` theo quyết định đã thống nhất.
-  - Tạo đơn walk-in -> lưu booking với role/ trạng thái phù hợp và hiển thị trên hàng chờ.
-- Điểm chưa chắc chắn:
-  - Phòng sau checkout chuyển sang `Cleaning` hay `Available` ngay; quyết định đã chọn `Cleaning` như trạng thái trung gian, nên cần gắn logic vào room board và check-out service.
+  - Check-out -> đơn `Completed`, phòng `Cleaning`; sau khi lễ tân xác nhận đã dọn xong -> phòng `Available`.
+  - Walk-in lưu `UserId = null`, `GuestName`, `GuestPhone`, status `Confirmed`, và `TotalAmount`; kiểm tra overlap ngay lúc lưu.
+- Room board đã có chuyển trạng thái `Cleaning` -> `Available` (thao tác xác nhận phòng đã sẵn sàng sau khi dọn).
 
-## [THAY ĐỔI] E — Admin: Dashboard, CRUD RoomType/Room, quản lý user, xem toàn bộ đơn, tạo tài khoản Receptionist/Admin
+## [ĐÃ HOÀN THÀNH] Sửa logic overlap — gom về một biểu thức dùng chung
+
+- File đã tạo/sửa:
+  - `HotelBlazor/Services/BookingOverlap.cs`
+  - `HotelBlazor/Services/RoomService.cs`
+  - `HotelBlazor/Services/BookingService.cs`
+  - `HotelBlazor/Services/ReceptionService.cs`
+- Predicate chung chỉ coi `Pending`, `Confirmed`, `CheckedIn` là trạng thái chặn, kèm điều kiện overlap ngày; `Completed` và `Cancelled` không chặn.
+- Cả tìm phòng lẫn kiểm tra lúc tạo booking online/walk-in đều dùng predicate này.
+- Kiểm tra đã thực hiện: build thành công và quét mã xác nhận điều kiện ngày/status chỉ định nghĩa một chỗ.
+
+## [ĐÃ HOÀN THÀNH] E — Admin: Dashboard, CRUD RoomType/Room, quản lý user, xem toàn bộ đơn, tạo tài khoản Receptionist/Admin
 
 - File sẽ tạo hoặc sửa:
   - `HotelBlazor/Components/Pages/Admin/Dashboard.razor`
@@ -139,13 +157,15 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
   - 16 (UI error handling cho danh sách)
 - Cách kiểm tra:
   - Dashboard hiển thị tổng số phòng, phòng trống, đơn Pending, doanh thu dự kiến.
-  - Admin không cho xóa phòng còn booking liên quan.
-  - Admin tạo tài khoản Receptionist/Admin với role phù hợp.
-  - Khóa user bằng Identity lockout -> user không login được nữa.
-- Điểm chưa chắc chắn:
-  - Cần xác định văn bản/UX khi user bị lockout: có hiển thị message “tài khoản đã bị khóa” trong login page hay không; quy định chung là login fail nhưng có thể custom thêm message.
+  - Service giới hạn danh sách đơn tối đa 100, mới nhất trước; lọc theo trạng thái.
+  - Admin không cho xóa phòng còn bất kỳ booking liên quan hoặc loại phòng còn phòng trực thuộc.
+  - Admin tạo tài khoản Receptionist/Admin qua Identity; khóa/mở khóa dùng Identity lockout.
+  - Không cho Admin tự khóa hoặc khóa Admin cuối cùng còn hoạt động.
+- Quyết định UX: Login hiển thị thông báo “Tài khoản đã bị khóa. Vui lòng thử lại sau.”
+- Không thay đổi model/schema nên không cần tạo migration.
+- Đã chạy kiểm tra build bằng `dotnet build`; chưa kiểm thử thủ công trên trình duyệt hoặc thử thao tác với dữ liệu thật.
 
-## [THAY ĐỔI] F — Rà soát Dockerfile, /health, ForwardedHeaders, Data Protection so với AGENTS.md (chỉ báo cáo chỗ thiếu, chưa sửa)
+## [CHƯA LÀM] F — Rà soát Dockerfile, /health, ForwardedHeaders, Data Protection so với AGENTS.md (chỉ báo cáo chỗ thiếu, chưa sửa)
 
 - File sẽ tạo hoặc sửa:
   - `Dockerfile`
@@ -155,6 +175,9 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
 
 - Tiêu chí SPEC tương ứng:
   - 17, 18, 19, 20
+- Ràng buộc thao tác database:
+  - Chỉ chạy `dotnet ef database update` trên database local sau khi giải thích và được người dùng xác nhận.
+  - Không chạy `database update` trên Render; production áp dụng migration bằng `Database.Migrate()` lúc khởi động.
 - Cách kiểm tra:
   - `PORT` được đọc trong runtime, không hard-code `ASPNETCORE_URLS` khi build.
   - `/health` trả 200 cho `AllowAnonymous`.
@@ -164,16 +187,18 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
 - Điểm chưa chắc chắn:
   - Render deploy hook URL và biến môi trường thực tế chưa có trong repo; do đó chỉ có thể báo cáo chỗ thiếu, không xác nhận hay sửa ngay.
 
-## [THAY ĐỔI] Thứ tự triển khai đề xuất
+## [CẬP NHẬT] Thứ tự và trạng thái triển khai
 
-1. A0 -> A -> B -> C -> D -> E -> F
+1. A0 -> A -> B -> C -> D -> sửa logic overlap -> E (đã hoàn thành) -> F
 2. Mỗi lát cắt nên làm với 1 commit logic nhỏ, đồng thời cập nhật UI hiển thị đủ 4 trạng thái đầy đủ theo SPEC: loading, error, empty, data.
 3. Cleanup architecture theo AGENTS (server-only) phải hoàn tất trong A0/A để tránh dư WASM trong dự án.
-4. Lát cắt F nên được đề xuất và rà soát sớm ngay sau A0/A, nhưng vẫn chỉ báo cáo chỗ thiếu chưa sửa theo yêu cầu.
+4. F chưa làm; chỉ báo cáo chỗ thiếu, chưa sửa.
 
-## [THAY ĐỔI] Lưu ý đánh giá rủi ro
+## [CẬP NHẬT] Lưu ý đánh giá rủi ro
 
 - Dự án hiện tại đang sai chuẩn với AGENTS ngay từ đầu; do đó, phần chỉnh sửa architecture sẽ là bước khởi tạo bắt buộc, không thể bỏ qua.
 - `HotelBlazor.Client` và `AddInteractiveWebAssemblyComponents` là điểm không tương thích lớn nhất cần xử lý trước khi xây chức năng nghiệp vụ.
-- Với quyết định dùng PostgreSQL cho cả local và Render, không còn dùng SQLite theo mặc định; Render free vẫn có thể reset dữ liệu theo deployment, nhưng phần app phải chuẩn bị cho connection string từ env/user-secrets.
-- Các định nghĩa mới đi kèm theo quyết định: `TotalAmount` lưu lúc đặt; `check-out` -> `Cleaning`; user khóa bằng `Identity lockout`.
+- PostgreSQL được dùng cho cả local và Render; connection string lấy từ user-secrets local / biến môi trường Render.
+- `TotalAmount` lưu lúc đặt; walk-in có `UserId = null` cùng `GuestName` / `GuestPhone`.
+- Check-out -> `Cleaning`; lễ tân xác nhận đã dọn xong -> `Available`.
+- User bị khóa bằng Identity lockout.

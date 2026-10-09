@@ -13,6 +13,13 @@
                     <NavLink class="nav-link px-0" href="/reception/walk-in">Khách vãng lai</NavLink>
                     <NavLink class="nav-link px-0" href="/reception/bookings">Hàng chờ đơn</NavLink>
                 </AuthorizeView>
+                <AuthorizeView Roles="@Role.Admin">
+                    <NavLink class="nav-link px-0" href="/dashboard">Quản trị</NavLink>
+                    <NavLink class="nav-link px-0" href="/admin/bookings">Toàn bộ đơn</NavLink>
+                    <NavLink class="nav-link px-0" href="/admin/room-types">Loại phòng</NavLink>
+                    <NavLink class="nav-link px-0" href="/admin/rooms">Quản lý phòng</NavLink>
+                    <NavLink class="nav-link px-0" href="/admin/users">Tài khoản</NavLink>
+                </AuthorizeView>
             </div>
             <AuthorizeView>
                 <Authorized Context="auth">

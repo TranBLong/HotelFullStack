@@ -5,11 +5,12 @@
 - **Không dùng Interactive WebAssembly**, không giữ dự án `HotelBlazor.Client`. Chỉ còn một dự án server (`HotelBlazor`).
 - Lý do: WASM chạy trong trình duyệt không gọi được Service → DbContext trực tiếp; dùng Server giữ kiến trúc đơn giản Component → Service → DbContext và tránh over-engineering.
 - **Chỉ dùng GitHub, Docker Hub, Render. Không thêm dịch vụ khác.**
-- Database: SQLite (chấp nhận mất dữ liệu khi redeploy trên Render free), hoặc PostgreSQL của Render (cần duyệt package Npgsql trước khi dùng).
+- Database: **PostgreSQL cho cả local và Render**. Không dùng SQLite.
 - Xác thực: ASP.NET Core Identity với **Cookie Authentication**. **Không dùng JWT**.
 - Giao diện: Blazor Components + Bootstrap (có sẵn trong template). Không cài thêm thư viện UI lớn nếu chưa được duyệt.
 - Chỉ dùng C# và Razor. Comment code bằng tiếng Việt ngắn gọn khi cần giải thích logic nghiệp vụ.
-- Package đã được duyệt thêm (nếu dùng): `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore` (để PersistKeysToDbContext).
+- Package đã được duyệt thêm: `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.AspNetCore.Identity.EntityFrameworkCore`,
+       `Microsoft.EntityFrameworkCore.Design`, `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`.
 
 ## Kiến trúc
 - Tách rõ lớp:
@@ -21,7 +22,7 @@
   - `Pages/` (Razor Pages): dùng cho **Login** và **Register** (form POST) vì Cookie không set ổn định trong lúc circuit SignalR đang chạy.
 - Mọi truy cập dữ liệu đi qua Service → DbContext.
 - Phân quyền bằng `[Authorize(Roles = "...")]` và policy/role claim sau khi đăng nhập bằng Cookie.
-- Connection string lấy từ `appsettings.json` / biến môi trường, không hard-code.
+- Connection string `DefaultConnection` lấy từ user-secrets (local) / biến môi trường (Render). Không ghi giá trị thật vào appsettings.json.
 
 ## Xác thực & Cookie (Blazor Server)
 - Trang Login / Register phải là **Razor Page** (hoặc endpoint form POST), không phải Blazor component interactive, để cookie được set đúng trước khi vào circuit.
@@ -49,7 +50,8 @@
   - Seed tài khoản Admin mặc định nếu chưa có (email/password lấy từ biến môi trường `ADMIN_EMAIL`, `ADMIN_PASSWORD`).
   - Bật `ForwardedHeaders` (X-Forwarded-For, X-Forwarded-Proto). **Phải xóa `KnownNetworks` và `KnownProxies`** vì proxy của Render không phải loopback; nếu không header sẽ bị bỏ qua → lỗi redirect/cookie.
   - Data Protection keys: lưu vào database bằng `PersistKeysToDbContext` (package `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore` đã được duyệt). **Không dùng volume** (Render free không có persistent disk). Nếu không PersistKeys thì chấp nhận người dùng phải đăng nhập lại sau mỗi lần restart.
-- SQLite trên Render free plan sẽ mất dữ liệu khi redeploy / restart. Chấp nhận reset dữ liệu demo.
+- Dữ liệu nằm trong PostgreSQL của Render, tách khỏi container nên redeploy không làm mất dữ liệu.
+  Gói free có giới hạn (dung lượng, thời hạn): kiểm tra chính sách hiện tại của Render.
 - Không hard-code secret vào Dockerfile hay workflow; dùng GitHub Secrets / Render Environment Variables.
 - Repo Docker Hub để **public**, hoặc khai báo registry credential trên Render nếu để private.
 - Image luôn push cả tag `latest` và tag theo `github.sha`; Deploy Hook chạy **sau khi** push thành công.
@@ -66,6 +68,8 @@
 - Giải thích thay đổi bằng tiếng Việt ngắn gọn, nêu rõ file nào đã tạo/sửa.
 - Không nói "đã chạy được" nếu chưa chạy kiểm tra thật. Nêu rõ điều gì chưa kiểm chứng.
 - Khi tạo migration ở môi trường local: giải thích lệnh và chờ xác nhận trước khi chạy `dotnet ef database update`.
+- Chỉ chạy `dotnet ef database update` trên DB local. Không trỏ chuỗi kết nối local vào DB Render.
+  Trên Render, schema được cập nhật bởi `Database.Migrate()` khi khởi động.
 - Ở Production (Render): được phép tự `Database.Migrate()` khi khởi động. Nếu `Program.cs` chưa có thì phải thêm vào (kiểm tra file trước, không giả định).
 - Ưu tiên code đơn giản, dễ đọc, phù hợp dự án demo sinh viên. Tránh over-engineering.
 
@@ -73,14 +77,20 @@
 - Role chỉ có 3 giá trị: `Customer`, `Receptionist`, `Admin`.
 - Trạng thái phòng (RoomStatus): `Available`, `Occupied`, `Cleaning`, `Maintenance`.
 - Trạng thái đơn (BookingStatus): `Pending`, `Confirmed`, `CheckedIn`, `Completed`, `Cancelled`.
-- Khi tìm phòng trống: loại bỏ phòng có booking (không Cancelled) thỏa mãn overlap:
+- Khi tìm phòng trống và khi tạo/sửa booking: chỉ booking có status `Pending`, `Confirmed`, `CheckedIn`
+  mới chặn phòng; `Completed` và `Cancelled` KHÔNG chặn. Điều kiện overlap:
   `ExistingCheckIn < NewCheckOut AND ExistingCheckOut > NewCheckIn`.
+  Logic này nằm ở MỘT chỗ dùng chung, không viết lặp ở nhiều service.
+- `TotalAmount` được tính và lưu vào Booking lúc đặt.
+- Đơn walk-in: `UserId` = null, có `GuestName` / `GuestPhone`.
+- Check-out: đơn -> `Completed`, phòng -> `Cleaning`; lễ tân bấm "Đã dọn xong" thì phòng -> `Available`.
+- Khóa tài khoản dùng Identity lockout.
 - Không xóa phòng nếu còn booking liên quan (chặn bằng logic nghiệp vụ).
 
 ## Cấm
 - Không tự ý thêm JWT, OAuth, Identity Server phức tạp.
 - Không dùng Interactive WebAssembly / dự án Client riêng.
-- Không cài package ngoài danh sách đã được duyệt (trừ `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore` và Npgsql nếu được duyệt riêng).
+- Không cài package ngoài danh sách đã được duyệt ở mục Công nghệ.
 - Không viết code thừa hoặc comment dài dòng không cần thiết.
 - Không commit file `bin/`, `obj/`, `.env`, `appsettings.Development.json` chứa secret.
 - Không thêm dịch vụ ngoài GitHub / Docker Hub / Render.

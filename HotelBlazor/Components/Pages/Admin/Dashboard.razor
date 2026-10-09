@@ -1,5 +1,91 @@
 @page "/dashboard"
 @attribute [Authorize(Roles = Role.Admin)]
 
-<PageTitle>Dashboard - HotelBlazor</PageTitle>
-<h1>Dashboard quản trị</h1>
+<PageTitle>Tổng quan quản trị - HotelBlazor</PageTitle>
+<main class="container py-4 py-lg-5">
+    <div class="mb-4">
+        <p class="text-uppercase text-primary fw-semibold small mb-1">Khu vực quản trị</p>
+        <h1 class="h2 fw-bold mb-1">Tổng quan khách sạn</h1>
+        <p class="text-secondary mb-0">Theo dõi nhanh tình hình phòng và đơn đặt.</p>
+    </div>
+
+    @if (_loading)
+    {
+        <LoadingSpinner Message="Đang tải số liệu tổng quan..." />
+    }
+    else if (_error is not null)
+    {
+        <ErrorAlert Message="@_error" OnRetry="LoadAsync" />
+    }
+    else if (_data is null)
+    {
+        <div class="alert alert-info">Chưa có số liệu để hiển thị.</div>
+    }
+    else
+    {
+        <div class="row g-3">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                    <p class="text-secondary mb-2">Tổng số phòng</p>
+                    <p class="display-6 fw-semibold mb-0">@_data.TotalRooms</p>
+                </div></div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                    <p class="text-secondary mb-2">Phòng trống</p>
+                    <p class="display-6 fw-semibold text-success mb-0">@_data.AvailableRooms</p>
+                </div></div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                    <p class="text-secondary mb-2">Đơn chờ duyệt</p>
+                    <p class="display-6 fw-semibold text-warning mb-0">@_data.PendingBookings</p>
+                </div></div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                    <p class="text-secondary mb-2">Doanh thu dự kiến</p>
+                    <p class="h3 fw-semibold text-primary mb-0">@_data.ExpectedRevenue.ToString("N0") ₫</p>
+                </div></div>
+            </div>
+        </div>
+
+        <section class="card border-0 shadow-sm mt-4">
+            <div class="card-body d-flex flex-wrap gap-2">
+                <a class="btn btn-primary" href="/admin/bookings">Xem toàn bộ đơn</a>
+                <a class="btn btn-outline-primary" href="/admin/rooms">Quản lý phòng</a>
+                <a class="btn btn-outline-primary" href="/admin/users">Quản lý tài khoản</a>
+            </div>
+        </section>
+    }
+</main>
+
+@code {
+    [Inject] private AdminService AdminService { get; set; } = null!;
+    [Inject] private ILogger<Dashboard> Logger { get; set; } = null!;
+
+    private AdminDashboardData? _data;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _data = await AdminService.GetDashboardAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải số liệu dashboard quản trị.");
+            _error = "Không thể tải số liệu lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

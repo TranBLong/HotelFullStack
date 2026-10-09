@@ -1,0 +1,132 @@
+@page "/admin/bookings"
+@attribute [Authorize(Roles = Role.Admin)]
+
+<PageTitle>Toàn bộ đơn đặt - HotelBlazor</PageTitle>
+<main class="container py-4">
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-primary fw-semibold small mb-1">Quản trị</p>
+            <h1 class="h2 fw-bold mb-1">Toàn bộ đơn đặt</h1>
+            <p class="text-secondary mb-0">Hiển thị tối đa 100 đơn mới nhất.</p>
+        </div>
+        <EditForm Model="_filter" OnValidSubmit="LoadAsync" class="d-flex align-items-end gap-2">
+            <div>
+                <label class="form-label" for="booking-status-filter">Trạng thái</label>
+                <InputSelect id="booking-status-filter" class="form-select" @bind-Value="_filter.Status">
+                    <option value="">Tất cả trạng thái</option>
+                    @foreach (var status in Enum.GetValues<BookingStatus>())
+                    {
+                        <option value="@status">@GetStatusLabel(status)</option>
+                    }
+                </InputSelect>
+            </div>
+            <button type="submit" class="btn btn-primary" disabled="@_loading">
+                @(_loading ? "Đang tải..." : "Lọc")
+            </button>
+        </EditForm>
+    </div>
+
+    @if (_loading)
+    {
+        <LoadingSpinner Message="Đang tải đơn đặt..." />
+    }
+    else if (_error is not null)
+    {
+        <ErrorAlert Message="@_error" OnRetry="LoadAsync" />
+    }
+    else if (_bookings.Count == 0)
+    {
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
+            <h2 class="h5">Chưa có đơn phù hợp</h2>
+            <p class="text-secondary mb-0">Hãy chọn trạng thái khác để xem thêm đơn đặt.</p>
+        </div></div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Mã đơn</th><th>Khách</th><th>Phòng</th><th>Thời gian</th><th>Tổng tiền</th><th>Trạng thái</th><th>Lý do từ chối</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var booking in _bookings)
+                        {
+                            <tr>
+                                <td class="fw-semibold">#@booking.Id</td>
+                                <td>
+                                    <div>@(string.IsNullOrWhiteSpace(booking.GuestName) ? "Khách" : booking.GuestName)</div>
+                                    @if (!string.IsNullOrWhiteSpace(booking.GuestPhone))
+                                    {
+                                        <small class="text-secondary">@booking.GuestPhone</small>
+                                    }
+                                </td>
+                                <td>@booking.RoomNumber</td>
+                                <td>@booking.CheckIn.ToString("dd/MM/yyyy") – @booking.CheckOut.ToString("dd/MM/yyyy")</td>
+                                <td class="text-nowrap">@booking.TotalAmount.ToString("N0") ₫</td>
+                                <td><span class="badge @GetStatusClass(booking.Status)">@GetStatusLabel(booking.Status)</span></td>
+                                <td class="text-secondary small">@(booking.RejectionReason ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</main>
+
+@code {
+    [Inject] private AdminService AdminService { get; set; } = null!;
+    [Inject] private ILogger<BookingOverview> Logger { get; set; } = null!;
+
+    private readonly BookingFilter _filter = new();
+    private IReadOnlyList<AdminBookingRow> _bookings = Array.Empty<AdminBookingRow>();
+    private bool _loading = true;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _bookings = await AdminService.GetBookingsAsync(_filter.Status);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải danh sách đơn đặt quản trị.");
+            _error = "Không thể tải danh sách đơn lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string GetStatusLabel(BookingStatus status) => status switch
+    {
+        BookingStatus.Pending => "Chờ duyệt",
+        BookingStatus.Confirmed => "Đã xác nhận",
+        BookingStatus.CheckedIn => "Đang lưu trú",
+        BookingStatus.Completed => "Hoàn tất",
+        BookingStatus.Cancelled => "Đã hủy",
+        _ => status.ToString()
+    };
+
+    private static string GetStatusClass(BookingStatus status) => status switch
+    {
+        BookingStatus.Pending => "text-bg-warning",
+        BookingStatus.Confirmed => "text-bg-primary",
+        BookingStatus.CheckedIn => "text-bg-info",
+        BookingStatus.Completed => "text-bg-success",
+        BookingStatus.Cancelled => "text-bg-secondary",
+        _ => "text-bg-secondary"
+    };
+
+    private sealed class BookingFilter
+    {
+        public BookingStatus? Status { get; set; }
+    }
+}

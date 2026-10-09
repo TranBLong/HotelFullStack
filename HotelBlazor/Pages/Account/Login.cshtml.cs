@@ -52,7 +52,7 @@ public class LoginModel : PageModel
 
         if (result.IsLockedOut)
         {
-            ModelState.AddModelError(string.Empty, "Tài khoản đang bị khóa. Vui lòng thử lại sau.");
+            ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa. Vui lòng thử lại sau.");
             return Page();
         }
 

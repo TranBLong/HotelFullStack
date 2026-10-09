@@ -1,0 +1,217 @@
+@page "/admin/room-types"
+@attribute [Authorize(Roles = Role.Admin)]
+
+<PageTitle>Quản lý loại phòng - HotelBlazor</PageTitle>
+<main class="container py-4">
+    <div class="mb-4">
+        <p class="text-uppercase text-primary fw-semibold small mb-1">Quản trị</p>
+        <h1 class="h2 fw-bold mb-1">Quản lý loại phòng</h1>
+        <p class="text-secondary mb-0">Tạo và cập nhật loại phòng cùng sức chứa.</p>
+    </div>
+
+    @if (_notice is not null)
+    {
+        <div class="alert alert-success">@_notice</div>
+    }
+    @if (_operationError is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_operationError</div>
+    }
+
+    <div class="row g-4">
+        <section class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">@(_form.Id == 0 ? "Thêm loại phòng" : "Chỉnh sửa loại phòng")</h2>
+                    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger small mb-3" />
+                        <div class="mb-3">
+                            <label class="form-label" for="roomtype-name">Tên loại phòng</label>
+                            <InputText id="roomtype-name" class="form-control" @bind-Value="_form.Name" />
+                            <ValidationMessage For="@(() => _form.Name)" class="text-danger small" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="roomtype-capacity">Sức chứa</label>
+                            <InputNumber id="roomtype-capacity" class="form-control" @bind-Value="_form.Capacity" />
+                            <ValidationMessage For="@(() => _form.Capacity)" class="text-danger small" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="roomtype-description">Mô tả</label>
+                            <InputTextArea id="roomtype-description" class="form-control" rows="3" @bind-Value="_form.Description" />
+                            <ValidationMessage For="@(() => _form.Description)" class="text-danger small" />
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" disabled="@_busy">
+                                @(_busy ? "Đang xử lý..." : "Lưu loại phòng")
+                            </button>
+                            @if (_form.Id != 0)
+                            {
+                                <button type="button" class="btn btn-outline-secondary" @onclick="ResetForm" disabled="@_busy">Hủy sửa</button>
+                            }
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </section>
+
+        <section class="col-12 col-lg-7">
+            @if (_loading)
+            {
+                <LoadingSpinner Message="Đang tải loại phòng..." />
+            }
+            else if (_loadError is not null)
+            {
+                <ErrorAlert Message="@_loadError" OnRetry="LoadAsync" />
+            }
+            else if (_roomTypes.Count == 0)
+            {
+                <div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
+                    <h2 class="h5">Chưa có loại phòng</h2>
+                    <p class="text-secondary mb-0">Dùng biểu mẫu để thêm loại phòng đầu tiên.</p>
+                </div></div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light"><tr><th>Tên loại</th><th>Sức chứa</th><th>Mô tả</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach (var roomType in _roomTypes)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@roomType.Name</td>
+                                        <td>@roomType.Capacity khách</td>
+                                        <td>@(roomType.Description ?? "—")</td>
+                                        <td class="text-nowrap">
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-1" @onclick="() => Edit(roomType)" disabled="@_busy">Sửa</button>
+                                            @if (_deleteId == roomType.Id)
+                                            {
+                                                <span class="small me-1">Xác nhận xóa?</span>
+                                                <button type="button" class="btn btn-sm btn-danger me-1" @onclick="() => DeleteAsync(roomType.Id)" disabled="@_busy">@(_busy ? "Đang xử lý..." : "Đồng ý")</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelDelete" disabled="@_busy">Không</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(roomType.Id)" disabled="@_busy">Xóa</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+</main>
+
+@code {
+    [Inject] private AdminService AdminService { get; set; } = null!;
+    [Inject] private ILogger<RoomTypeManagement> Logger { get; set; } = null!;
+
+    private IReadOnlyList<RoomType> _roomTypes = Array.Empty<RoomType>();
+    private RoomTypeEditModel _form = new();
+    private bool _loading = true;
+    private bool _busy;
+    private int? _deleteId;
+    private string? _loadError;
+    private string? _operationError;
+    private string? _notice;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadError = null;
+        try
+        {
+            _roomTypes = await AdminService.GetRoomTypesAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tải danh sách loại phòng.");
+            _loadError = "Không thể tải loại phòng lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _operationError = null;
+        _notice = null;
+        try
+        {
+            await AdminService.SaveRoomTypeAsync(_form);
+            _notice = "Đã lưu loại phòng.";
+            ResetForm();
+            await LoadAsync();
+        }
+        catch (AdminOperationException exception)
+        {
+            Logger.LogError(exception, "Không thể lưu loại phòng {RoomTypeId}.", _form.Id);
+            _operationError = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể lưu loại phòng.");
+            _operationError = "Không thể lưu loại phòng lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Edit(RoomType roomType)
+    {
+        _form = new RoomTypeEditModel
+        {
+            Id = roomType.Id,
+            Name = roomType.Name,
+            Description = roomType.Description,
+            Capacity = roomType.Capacity
+        };
+        _notice = null;
+        _operationError = null;
+    }
+
+    private void ResetForm() => _form = new RoomTypeEditModel();
+    private void ConfirmDelete(int id) => _deleteId = id;
+    private void CancelDelete() => _deleteId = null;
+
+    private async Task DeleteAsync(int id)
+    {
+        _busy = true;
+        _operationError = null;
+        _notice = null;
+        try
+        {
+            await AdminService.DeleteRoomTypeAsync(id);
+            _deleteId = null;
+            _notice = "Đã xóa loại phòng.";
+            await LoadAsync();
+        }
+        catch (AdminOperationException exception)
+        {
+            Logger.LogError(exception, "Không thể xóa loại phòng {RoomTypeId}.", id);
+            _operationError = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể xóa loại phòng {RoomTypeId}.", id);
+            _operationError = "Không thể xóa loại phòng lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

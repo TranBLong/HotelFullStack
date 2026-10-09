@@ -1,0 +1,97 @@
+@page "/admin/users/create"
+@attribute [Authorize(Roles = Role.Admin)]
+
+<PageTitle>Tạo tài khoản nhân viên - HotelBlazor</PageTitle>
+<main class="container py-4">
+    <div class="mb-4">
+        <a class="small text-decoration-none" href="/admin/users">← Quay lại danh sách tài khoản</a>
+        <p class="text-uppercase text-primary fw-semibold small mt-3 mb-1">Quản trị</p>
+        <h1 class="h2 fw-bold mb-1">Tạo tài khoản nhân viên</h1>
+        <p class="text-secondary mb-0">Tài khoản được tạo bằng Identity và mật khẩu được băm tự động.</p>
+    </div>
+
+    @if (_success)
+    {
+        <div class="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span>Đã tạo tài khoản nhân viên thành công.</span>
+            <a class="btn btn-sm btn-outline-success" href="/admin/users">Về danh sách tài khoản</a>
+        </div>
+    }
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+
+    <div class="card border-0 shadow-sm" style="max-width: 620px;">
+        <div class="card-body p-4 p-md-5">
+            <EditForm Model="_form" OnValidSubmit="CreateAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger small mb-3" />
+                <div class="mb-3">
+                    <label class="form-label" for="staff-email">Email</label>
+                    <InputText id="staff-email" type="email" class="form-control" autocomplete="email" @bind-Value="_form.Email" />
+                    <ValidationMessage For="@(() => _form.Email)" class="text-danger small" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="staff-name">Họ và tên</label>
+                    <InputText id="staff-name" class="form-control" autocomplete="name" @bind-Value="_form.FullName" />
+                    <ValidationMessage For="@(() => _form.FullName)" class="text-danger small" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="staff-role">Vai trò</label>
+                    <InputSelect id="staff-role" class="form-select" @bind-Value="_form.Role">
+                        <option value="@Role.Receptionist">Lễ tân</option>
+                        <option value="@Role.Admin">Quản trị viên</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _form.Role)" class="text-danger small" />
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" for="staff-password">Mật khẩu</label>
+                    <InputText id="staff-password" type="password" class="form-control" autocomplete="new-password" @bind-Value="_form.Password" />
+                    <ValidationMessage For="@(() => _form.Password)" class="text-danger small" />
+                    <div class="form-text">Mật khẩu phải đáp ứng chính sách Identity của ứng dụng.</div>
+                </div>
+                <button type="submit" class="btn btn-primary" disabled="@_busy">
+                    @(_busy ? "Đang tạo tài khoản..." : "Tạo tài khoản")
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</main>
+
+@code {
+    [Inject] private AdminService AdminService { get; set; } = null!;
+    [Inject] private ILogger<CreateStaffAccount> Logger { get; set; } = null!;
+
+    private StaffAccountInput _form = new();
+    private bool _busy;
+    private bool _success;
+    private string? _error;
+
+    private async Task CreateAsync()
+    {
+        _busy = true;
+        _error = null;
+        _success = false;
+        try
+        {
+            await AdminService.CreateStaffAccountAsync(_form);
+            _success = true;
+            _form = new StaffAccountInput();
+        }
+        catch (AdminOperationException exception)
+        {
+            Logger.LogError(exception, "Không thể tạo tài khoản nhân viên.");
+            _error = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Không thể tạo tài khoản nhân viên.");
+            _error = "Không thể tạo tài khoản lúc này. Vui lòng thử lại.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

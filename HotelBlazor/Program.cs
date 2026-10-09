@@ -38,6 +38,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<RoomService>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<ReceptionService>();
+builder.Services.AddScoped<AdminService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
