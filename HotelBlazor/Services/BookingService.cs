@@ -46,11 +46,9 @@ public sealed class BookingService
             throw new BookingRequestException("Phòng hiện không thể đặt.");
         }
 
-        var hasOverlap = await HasOverlappingBookingAsync(
-            roomId,
-            checkIn,
-            checkOut,
-            cancellationToken);
+        var hasOverlap = await _dbContext.Bookings
+            .Where(BookingOverlap.IsBlockingForDateRange(checkIn, checkOut))
+            .AnyAsync(booking => booking.RoomId == roomId, cancellationToken);
         if (hasOverlap)
         {
             throw new BookingRequestException("Phòng vừa được đặt trong khoảng ngày này. Vui lòng tìm phòng khác.");
@@ -143,20 +141,6 @@ public sealed class BookingService
 
         booking.Status = BookingStatus.Cancelled;
         await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private async Task<bool> HasOverlappingBookingAsync(
-        int roomId,
-        DateOnly checkIn,
-        DateOnly checkOut,
-        CancellationToken cancellationToken)
-    {
-        return await _dbContext.Bookings.AnyAsync(booking =>
-            booking.RoomId == roomId &&
-            booking.Status != BookingStatus.Cancelled &&
-            booking.CheckIn < checkOut &&
-            booking.CheckOut > checkIn,
-            cancellationToken);
     }
 
     private static void ValidateDates(DateOnly checkIn, DateOnly checkOut)

@@ -168,12 +168,9 @@ public sealed class ReceptionService
             throw new ReceptionRequestException("Phòng hiện không sẵn sàng để đặt.");
         }
 
-        var hasOverlap = await _dbContext.Bookings.AnyAsync(booking =>
-            booking.RoomId == roomId &&
-            booking.Status != BookingStatus.Cancelled &&
-            booking.CheckIn < checkOut &&
-            booking.CheckOut > checkIn,
-            cancellationToken);
+        var hasOverlap = await _dbContext.Bookings
+            .Where(BookingOverlap.IsBlockingForDateRange(checkIn, checkOut))
+            .AnyAsync(booking => booking.RoomId == roomId, cancellationToken);
         if (hasOverlap)
         {
             throw new ReceptionRequestException("Phòng đã có đơn trong khoảng ngày này. Vui lòng chọn phòng hoặc ngày khác.");

@@ -40,12 +40,12 @@ public sealed class RoomService
             rooms = rooms.Where(room => room.RoomTypeId == criteria.RoomTypeId.Value);
         }
 
+        var blockingRoomIds = _dbContext.Bookings
+            .Where(BookingOverlap.IsBlockingForDateRange(criteria.CheckIn, criteria.CheckOut))
+            .Select(booking => booking.RoomId);
+
         return await rooms
-            .Where(room => !_dbContext.Bookings.Any(booking =>
-                booking.RoomId == room.Id &&
-                booking.Status != BookingStatus.Cancelled &&
-                booking.CheckIn < criteria.CheckOut &&
-                booking.CheckOut > criteria.CheckIn))
+            .Where(room => !blockingRoomIds.Contains(room.Id))
             .OrderBy(room => room.PricePerNight)
             .ThenBy(room => room.RoomNumber)
             .ToListAsync(cancellationToken);
