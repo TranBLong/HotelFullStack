@@ -22,10 +22,15 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t ${{ secrets.DOCKER_USERNAME }}/wtabs_socibot_ai:latest \
-            -t ${{ secrets.DOCKER_USERNAME }}/wtabs_socibot_ai:${{ github.sha }} .
+            -t ${{ secrets.DOCKER_USERNAME }}/hotel-fullstack:latest \
+            -t ${{ secrets.DOCKER_USERNAME }}/hotel-fullstack:${{ github.sha }} .
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/wtabs_socibot_ai:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/wtabs_socibot_ai:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/hotel-fullstack:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/hotel-fullstack:${{ github.sha }}
+
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"

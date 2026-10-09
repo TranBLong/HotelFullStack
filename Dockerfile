@@ -13,6 +13,6 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-EXPOSE 80
-ENV ASPNETCORE_URLS=http://+:80
-ENTRYPOINT ["dotnet", "HotelBlazor.dll"]
+EXPOSE 8080
+# Đọc PORT lúc chạy (Render cấp PORT), mặc định 8080 khi chạy local
+CMD ["sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-8080} dotnet HotelBlazor.dll"]
