@@ -1,0 +1,42 @@
+<img class="@CssClass"
+     src="@CurrentImageUrl"
+     alt="@Alt"
+     loading="lazy"
+     @onerror="ShowPlaceholder" />
+
+@code {
+    private const string PlaceholderImageUrl = "/images/placeholder-room.jpg";
+    private string? _sourceAtLastRender;
+    private bool _imageFailed;
+
+    [Parameter]
+    public string? ImageUrl { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Alt { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    private string CurrentImageUrl =>
+        _imageFailed || string.IsNullOrWhiteSpace(ImageUrl)
+            ? PlaceholderImageUrl
+            : ImageUrl;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.Equals(_sourceAtLastRender, ImageUrl, StringComparison.Ordinal))
+        {
+            _sourceAtLastRender = ImageUrl;
+            _imageFailed = false;
+        }
+    }
+
+    private void ShowPlaceholder()
+    {
+        if (!_imageFailed && !string.IsNullOrWhiteSpace(ImageUrl))
+        {
+            _imageFailed = true;
+        }
+    }
+}

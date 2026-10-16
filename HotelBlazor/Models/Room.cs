@@ -5,6 +5,7 @@ public class Room
     public int Id { get; set; }
     public string RoomNumber { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? ImageUrl { get; set; }
     public decimal PricePerNight { get; set; }
     public RoomStatus Status { get; set; } = RoomStatus.Available;
     public int RoomTypeId { get; set; }

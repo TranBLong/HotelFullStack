@@ -6,6 +6,14 @@ namespace HotelBlazor.Data;
 
 public static class DbInitializer
 {
+    private static readonly IReadOnlyDictionary<string, string> RoomImageUrls =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Standard"] = "/images/rooms/standard-1.jpg",
+            ["Deluxe"] = "/images/rooms/deluxe-1.jpg",
+            ["Suite"] = "/images/rooms/suite-1.jpg"
+        };
+
     public static async Task InitializeAsync(
         IServiceProvider services,
         ILogger logger,
@@ -29,6 +37,7 @@ public static class DbInitializer
         await SeedAdminAsync(userManager, logger);
         await SeedRoomTypesAsync(dbContext, cancellationToken);
         await SeedRoomsAsync(dbContext, cancellationToken);
+        await BackfillRoomImagesAsync(dbContext, cancellationToken);
     }
 
     private static async Task SeedAdminAsync(
@@ -108,6 +117,7 @@ public static class DbInitializer
             {
                 RoomNumber = $"10{index}",
                 Description = $"{roomType.Name} - phòng {index}",
+                ImageUrl = GetRoomImageUrl(roomType.Name),
                 PricePerNight = 500000m + (index * 250000m),
                 Status = RoomStatus.Available,
                 RoomTypeId = roomType.Id
@@ -117,6 +127,34 @@ public static class DbInitializer
         dbContext.Rooms.AddRange(rooms);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    private static async Task BackfillRoomImagesAsync(
+        ApplicationDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var rooms = await dbContext.Rooms
+            .Include(room => room.RoomType)
+            .ToListAsync(cancellationToken);
+
+        var changed = false;
+        foreach (var room in rooms)
+        {
+            if (string.IsNullOrWhiteSpace(room.ImageUrl) &&
+                RoomImageUrls.TryGetValue(room.RoomType.Name, out var imageUrl))
+            {
+                room.ImageUrl = imageUrl;
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private static string? GetRoomImageUrl(string roomTypeName) =>
+        RoomImageUrls.TryGetValue(roomTypeName, out var imageUrl) ? imageUrl : null;
 
     private static void EnsureSuccess(IdentityResult result, string message)
     {

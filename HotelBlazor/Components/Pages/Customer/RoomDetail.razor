@@ -28,22 +28,34 @@ else
     <a href="/rooms" class="link-secondary text-decoration-none">&larr; Quay lại danh sách phòng</a>
     <div class="row g-4 mt-1">
         <div class="col-12 col-lg-7">
-            <section class="rounded-4 bg-primary-subtle p-4 p-md-5 h-100">
+            <RoomImage ImageUrl="@Room.ImageUrl"
+                       Alt="@($"Không gian phòng {Room.RoomNumber}, loại {Room.RoomType.Name}")"
+                       CssClass="room-detail-image" />
+            <section class="room-detail-overview mt-4">
                 <span class="badge text-bg-primary mb-3">@Room.RoomType.Name</span>
                 <h1 class="display-6 fw-semibold">Phòng @Room.RoomNumber</h1>
                 <p class="lead text-secondary">@Room.Description</p>
-                <div class="row g-3 mt-4">
+                <div class="row g-3 mt-3">
                     <div class="col-6">
-                        <div class="bg-white rounded-3 p-3 h-100">
+                        <div class="room-detail-fact h-100">
                             <span class="small text-secondary d-block">Sức chứa</span>
                             <strong>Tối đa @Room.RoomType.Capacity khách</strong>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="bg-white rounded-3 p-3 h-100">
+                        <div class="room-detail-fact h-100">
                             <span class="small text-secondary d-block">Giá mỗi đêm</span>
                             <strong>@FormatPrice(Room.PricePerNight)</strong>
                         </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h2 class="h5 mb-3">Tiện nghi</h2>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="room-amenity">Wi-Fi miễn phí</span>
+                        <span class="room-amenity">Điều hòa</span>
+                        <span class="room-amenity">Phòng tắm riêng</span>
+                        <span class="room-amenity">Dịch vụ lễ tân</span>
                     </div>
                 </div>
                 @if (Room.Status != RoomStatus.Available)
@@ -53,8 +65,9 @@ else
             </section>
         </div>
         <div class="col-12 col-lg-5">
-            <section class="card border-0 shadow-sm">
-                <div class="card-body p-4">
+            <section class="card border-0 room-booking-card">
+                <div class="card-body p-4 p-xl-5">
+                    <p class="hotel-eyebrow mb-2">Kế hoạch lưu trú</p>
                     <h2 class="h4">Đặt phòng</h2>
                     <p class="text-secondary">Đơn sẽ ở trạng thái chờ xác nhận sau khi gửi.</p>
                     @if (BookingError is not null)
@@ -76,9 +89,21 @@ else
                             <label class="form-label" for="detail-check-in">Ngày nhận phòng</label>
                             <InputDate id="detail-check-in" class="form-control" @bind-Value="BookingInput.CheckIn" />
                         </div>
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label class="form-label" for="detail-check-out">Ngày trả phòng</label>
                             <InputDate id="detail-check-out" class="form-control" @bind-Value="BookingInput.CheckOut" />
+                        </div>
+                        <div class="room-estimate mb-4">
+                            <div class="d-flex justify-content-between gap-3">
+                                <span class="text-secondary">Số đêm</span>
+                                <strong>@(BookingNights > 0 ? BookingNights.ToString() : "—")</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-end gap-3 mt-2">
+                                <span class="text-secondary">@FormatPrice(Room.PricePerNight) / đêm</span>
+                                <strong class="room-estimate-total">
+                                    @(BookingNights > 0 ? FormatPrice(Room.PricePerNight * BookingNights) : "—")
+                                </strong>
+                            </div>
                         </div>
                         <button type="submit"
                                 class="btn btn-primary btn-lg w-100"
@@ -112,6 +137,7 @@ else
     private int? BookingNumber { get; set; }
     private decimal BookingAmount { get; set; }
     private BookingInputModel BookingInput { get; set; } = BookingInputModel.CreateDefault();
+    private int BookingNights => BookingInput.CheckOut.DayNumber - BookingInput.CheckIn.DayNumber;
 
     protected override async Task OnParametersSetAsync()
     {

@@ -100,14 +100,15 @@
                 <div class="card border-0 shadow-sm">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light"><tr><th>Phòng</th><th>Loại</th><th>Giá/đêm</th><th>Trạng thái</th><th></th></tr></thead>
+                            <thead class="table-light"><tr><th>Ảnh</th><th>Phòng</th><th>Loại</th><th>Giá/đêm</th><th>Trạng thái</th><th></th></tr></thead>
                             <tbody>
                                 @foreach (var room in _rooms)
                                 {
                                     <tr>
+                                        <td><RoomImage ImageUrl="@room.ImageUrl" Alt="@($"Ảnh phòng {room.RoomNumber}")" CssClass="admin-room-thumbnail" /></td>
                                         <td><span class="fw-semibold">@room.RoomNumber</span><div class="small text-secondary">@room.Description</div></td>
                                         <td>@room.RoomType.Name</td>
-                                        <td class="text-nowrap">@room.PricePerNight.ToString("N0") ₫</td>
+                                        <td class="text-nowrap">@FormatPrice(room.PricePerNight)</td>
                                         <td><span class="badge @GetRoomStatusClass(room.Status)">@GetRoomStatusLabel(room.Status)</span></td>
                                         <td class="text-nowrap">
                                             <button type="button" class="btn btn-sm btn-outline-primary me-1" @onclick="() => Edit(room)" disabled="@_busy">Sửa</button>
@@ -255,10 +256,13 @@
 
     private static string GetRoomStatusClass(RoomStatus status) => status switch
     {
-        RoomStatus.Available => "text-bg-success",
-        RoomStatus.Occupied => "text-bg-danger",
-        RoomStatus.Cleaning => "text-bg-warning",
-        RoomStatus.Maintenance => "text-bg-secondary",
-        _ => "text-bg-secondary"
+        RoomStatus.Available => "status-available",
+        RoomStatus.Occupied => "status-occupied",
+        RoomStatus.Cleaning => "status-cleaning",
+        RoomStatus.Maintenance => "status-maintenance",
+        _ => "status-maintenance"
     };
+
+    private static string FormatPrice(decimal amount) =>
+        $"{amount.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} ₫";
 }

@@ -32,6 +32,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataPro
             entity.HasIndex(room => room.RoomNumber).IsUnique();
             entity.Property(room => room.RoomNumber).HasMaxLength(20).IsRequired();
             entity.Property(room => room.Description).HasMaxLength(500);
+            entity.Property(room => room.ImageUrl).HasMaxLength(500);
             entity.Property(room => room.PricePerNight).HasPrecision(18, 2);
             entity.Property(room => room.Status).HasConversion<string>().HasMaxLength(20);
             entity.HasOne(room => room.RoomType)
