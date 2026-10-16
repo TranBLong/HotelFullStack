@@ -9,7 +9,7 @@
             <h1 class="h2 fw-bold mb-1">Toàn bộ đơn đặt</h1>
             <p class="text-secondary mb-0">Hiển thị tối đa 100 đơn mới nhất.</p>
         </div>
-        <EditForm Model="_filter" OnValidSubmit="LoadAsync" class="d-flex align-items-end gap-2">
+        <EditForm Model="_filter" OnValidSubmit="LoadAsync" class="d-flex flex-wrap align-items-end gap-2">
             <div>
                 <label class="form-label" for="booking-status-filter">Trạng thái</label>
                 <InputSelect id="booking-status-filter" class="form-select" @bind-Value="_filter.Status">
@@ -63,7 +63,7 @@
                                 </td>
                                 <td>@booking.RoomNumber</td>
                                 <td>@booking.CheckIn.ToString("dd/MM/yyyy") – @booking.CheckOut.ToString("dd/MM/yyyy")</td>
-                                <td class="text-nowrap">@booking.TotalAmount.ToString("N0") ₫</td>
+                                <td class="text-nowrap">@FormatPrice(booking.TotalAmount)</td>
                                 <td><span class="badge @GetStatusClass(booking.Status)">@GetStatusLabel(booking.Status)</span></td>
                                 <td class="text-secondary small">@(booking.RejectionReason ?? "—")</td>
                             </tr>
@@ -117,13 +117,16 @@
 
     private static string GetStatusClass(BookingStatus status) => status switch
     {
-        BookingStatus.Pending => "text-bg-warning",
-        BookingStatus.Confirmed => "text-bg-primary",
-        BookingStatus.CheckedIn => "text-bg-info",
-        BookingStatus.Completed => "text-bg-success",
-        BookingStatus.Cancelled => "text-bg-secondary",
-        _ => "text-bg-secondary"
+        BookingStatus.Pending => "status-pending",
+        BookingStatus.Confirmed => "status-confirmed",
+        BookingStatus.CheckedIn => "status-checked-in",
+        BookingStatus.Completed => "status-completed",
+        BookingStatus.Cancelled => "status-cancelled",
+        _ => "status-completed"
     };
+
+    private static string FormatPrice(decimal amount) =>
+        $"{amount.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} ₫";
 
     private sealed class BookingFilter
     {

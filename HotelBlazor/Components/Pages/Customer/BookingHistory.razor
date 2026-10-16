@@ -22,7 +22,7 @@ else if (ErrorMessage is not null)
 }
 else if (Bookings is null || Bookings.Count == 0)
 {
-    <div class="text-center rounded-4 border bg-white py-5 px-3">
+    <div class="hotel-empty-state">
         <h2 class="h4">Bạn chưa có đơn đặt phòng</h2>
         <p class="text-secondary">Tìm phòng phù hợp để bắt đầu lên kế hoạch cho kỳ nghỉ.</p>
         <a class="btn btn-primary" href="/rooms">Tìm phòng</a>
@@ -139,12 +139,12 @@ else
 
     private static string GetStatusClass(BookingStatus status) => status switch
     {
-        BookingStatus.Pending => "text-bg-warning",
-        BookingStatus.Confirmed => "text-bg-primary",
-        BookingStatus.CheckedIn => "text-bg-success",
-        BookingStatus.Completed => "text-bg-secondary",
-        BookingStatus.Cancelled => "text-bg-danger",
-        _ => "text-bg-secondary"
+        BookingStatus.Pending => "status-pending",
+        BookingStatus.Confirmed => "status-confirmed",
+        BookingStatus.CheckedIn => "status-checked-in",
+        BookingStatus.Completed => "status-completed",
+        BookingStatus.Cancelled => "status-cancelled",
+        _ => "status-completed"
     };
 
     private static string GetStatusLabel(BookingStatus status) => status switch

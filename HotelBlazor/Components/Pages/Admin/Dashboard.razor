@@ -2,7 +2,7 @@
 @attribute [Authorize(Roles = Role.Admin)]
 
 <PageTitle>Tổng quan quản trị - HotelBlazor</PageTitle>
-<main class="container py-4 py-lg-5">
+<section class="admin-dashboard">
     <div class="mb-4">
         <p class="text-uppercase text-primary fw-semibold small mb-1">Khu vực quản trị</p>
         <h1 class="h2 fw-bold mb-1">Tổng quan khách sạn</h1>
@@ -25,27 +25,27 @@
     {
         <div class="row g-3">
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm h-100"><div class="card-body">
-                    <p class="text-secondary mb-2">Tổng số phòng</p>
-                    <p class="display-6 fw-semibold mb-0">@_data.TotalRooms</p>
+                <div class="card dashboard-stat-card dashboard-stat-card--navy h-100"><div class="card-body">
+                    <p class="dashboard-stat-label">Tổng số phòng</p>
+                    <p class="dashboard-stat-value">@_data.TotalRooms</p>
                 </div></div>
             </div>
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm h-100"><div class="card-body">
-                    <p class="text-secondary mb-2">Phòng trống</p>
-                    <p class="display-6 fw-semibold text-success mb-0">@_data.AvailableRooms</p>
+                <div class="card dashboard-stat-card dashboard-stat-card--green h-100"><div class="card-body">
+                    <p class="dashboard-stat-label">Phòng trống</p>
+                    <p class="dashboard-stat-value">@_data.AvailableRooms</p>
                 </div></div>
             </div>
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm h-100"><div class="card-body">
-                    <p class="text-secondary mb-2">Đơn chờ duyệt</p>
-                    <p class="display-6 fw-semibold text-warning mb-0">@_data.PendingBookings</p>
+                <div class="card dashboard-stat-card dashboard-stat-card--gold h-100"><div class="card-body">
+                    <p class="dashboard-stat-label">Đơn chờ duyệt</p>
+                    <p class="dashboard-stat-value">@_data.PendingBookings</p>
                 </div></div>
             </div>
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm h-100"><div class="card-body">
-                    <p class="text-secondary mb-2">Doanh thu dự kiến</p>
-                    <p class="h3 fw-semibold text-primary mb-0">@_data.ExpectedRevenue.ToString("N0") ₫</p>
+                <div class="card dashboard-stat-card dashboard-stat-card--teal h-100"><div class="card-body">
+                    <p class="dashboard-stat-label">Doanh thu dự kiến</p>
+                    <p class="dashboard-stat-value dashboard-stat-revenue">@_data.ExpectedRevenue.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) ₫</p>
                 </div></div>
             </div>
         </div>
@@ -58,7 +58,7 @@
             </div>
         </section>
     }
-</main>
+</section>
 
 @code {
     [Inject] private AdminService AdminService { get; set; } = null!;

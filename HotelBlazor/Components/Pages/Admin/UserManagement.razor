@@ -31,10 +31,10 @@
     }
     else if (_users.Count == 0)
     {
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
+        <div class="hotel-empty-state">
             <h2 class="h5">Chưa có tài khoản</h2>
             <p class="text-secondary mb-0">Danh sách tài khoản hiện đang trống.</p>
-        </div></div>
+        </div>
     }
     else
     {
@@ -55,7 +55,7 @@
                                     }
                                 </div></td>
                                 <td>
-                                    <span class="badge @(user.IsLockedOut ? "text-bg-danger" : "text-bg-success")">
+                                    <span class="badge @(user.IsLockedOut ? "status-cancelled" : "status-available")">
                                         @(user.IsLockedOut ? "Đã khóa" : "Hoạt động")
                                     </span>
                                 </td>
