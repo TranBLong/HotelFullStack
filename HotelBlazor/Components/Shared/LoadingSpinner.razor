@@ -1,6 +1,11 @@
-<div class="d-flex align-items-center justify-content-center gap-2 py-4" role="status">
-    <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span>
-    <span class="text-secondary">@Message</span>
+<div class="loading-panel" role="status" aria-live="polite">
+    <span class="spinner-border text-primary" aria-hidden="true"></span>
+    <span>@Message</span>
+    <span class="loading-skeleton" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+    </span>
 </div>
 
 @code {

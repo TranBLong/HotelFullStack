@@ -1,7 +1,32 @@
-﻿@page "/"
+@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Trang chủ - HotelBlazor</PageTitle>
 
-<h1>Hello, world!</h1>
+<section class="hotel-home-hero">
+    <img class="hotel-home-hero-image"
+         src="/images/hero/hotel-hero.jpg"
+         alt="Không gian khách sạn hiện đại, ấm cúng và ngập ánh sáng tự nhiên"
+         fetchpriority="high" />
+    <div class="hotel-home-hero-overlay"></div>
+    <div class="hotel-home-hero-content">
+        <p class="hotel-eyebrow">Một kỳ nghỉ đáng nhớ bắt đầu từ đây</p>
+        <h1>Nghỉ ngơi trọn vẹn,<br />theo cách của bạn.</h1>
+        <p>Khám phá không gian lưu trú thoải mái, tiện nghi và phù hợp cho chuyến đi tiếp theo.</p>
+        <AuthorizeView Roles="@Role.Customer">
+            <Authorized>
+                <a class="btn btn-light btn-lg" href="/rooms">Khám phá phòng</a>
+            </Authorized>
+            <NotAuthorized>
+                <a class="btn btn-light btn-lg" href="/login">Đăng nhập để tìm phòng</a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</section>
 
-Welcome to your new app.
+<section class="hotel-home-intro text-center">
+    <p class="hotel-eyebrow">HotelBlazor</p>
+    <h2 class="h2 mb-3">Không gian thoải mái cho mọi hành trình</h2>
+    <p class="text-secondary mb-0 mx-auto">
+        Từ chuyến công tác ngắn ngày đến kỳ nghỉ cùng gia đình, lựa chọn phòng phù hợp và quản lý đặt phòng thuận tiện.
+    </p>
+</section>

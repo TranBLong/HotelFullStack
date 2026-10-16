@@ -1,8 +1,14 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="min-vh-100 bg-body-tertiary">
+<div class="hotel-site-shell min-vh-100 d-flex flex-column">
     <Navbar />
-    <main class="container py-4 py-md-5">
+    <main class="container hotel-main-content flex-grow-1 py-4 py-md-5">
         @Body
     </main>
+    <footer class="hotel-footer">
+        <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+            <span class="fw-semibold">HotelBlazor</span>
+            <span>Chăm chút cho từng kỳ nghỉ.</span>
+        </div>
+    </footer>
 </div>
