@@ -165,7 +165,7 @@ Kế hoạch dưới đây chia thành các lát cắt nhỏ, theo thứ tự h�
 - Không thay đổi model/schema nên không cần tạo migration.
 - Đã chạy kiểm tra build bằng `dotnet build`; chưa kiểm thử thủ công trên trình duyệt hoặc thử thao tác với dữ liệu thật.
 
-## [CHƯA LÀM] F — Rà soát Dockerfile, /health, ForwardedHeaders, Data Protection so với AGENTS.md (chỉ báo cáo chỗ thiếu, chưa sửa)
+## [ĐÃ HOÀN THÀNH] F — Rà soát Dockerfile, /health, ForwardedHeaders, Data Protection so với AGENTS.md (chỉ báo cáo chỗ thiếu, chưa sửa)
 
 - File sẽ tạo hoặc sửa:
   - `Dockerfile`
