@@ -2,7 +2,7 @@ using System.Data;
 using HotelBlazor.Data;
 using HotelBlazor.Models;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Oracle.ManagedDataAccess.Client;
 
 namespace HotelBlazor.Services;
 
@@ -88,7 +88,7 @@ public sealed class BookingService
                 "Phòng vừa được đặt trong khoảng ngày này. Vui lòng tìm phòng khác.",
                 exception);
         }
-        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.SerializationFailure)
+        catch (OracleException exception) when (exception.Number == 8177)
         {
             _dbContext.Entry(booking).State = EntityState.Detached;
             throw new BookingRequestException(
@@ -166,9 +166,9 @@ public sealed class BookingService
 
     private static bool IsSerializationFailure(DbUpdateException exception)
     {
-        return exception.InnerException is PostgresException
+        return exception.InnerException is OracleException
         {
-            SqlState: PostgresErrorCodes.SerializationFailure
+            Number: 8177
         };
     }
 }

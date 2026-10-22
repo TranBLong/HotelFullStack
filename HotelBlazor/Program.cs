@@ -13,7 +13,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Cấu hình ConnectionStrings:DefaultConnection chưa được đặt.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseOracle(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>()
