@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         IMAGE_NAME  = "hotel-fullstack"
-        SERVER_HOST = "192.168.100.211"
-        SERVER_USER = "long"
+        SERVER_HOST = "3.25.136.141"   // IP công khai của EC2 (đổi nếu IP thay đổi)
+        SERVER_USER = "ubuntu"         // dùng ec2-user nếu là Amazon Linux
     }
 
     triggers { pollSCM('H/2 * * * *') }
@@ -37,20 +37,14 @@ pipeline {
             }
         }
 
-        stage('Deploy Server') {
+        stage('Deploy EC2') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-cred',
                     usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sshagent(credentials: ['server-ssh-key']) {
-                        sh '''
+                    sshagent(credentials: ['ec2-ssh-key']) {                        sh '''
                         scp -o StrictHostKeyChecking=no docker-compose.prod.yml $SERVER_USER@$SERVER_HOST:~/hotel/docker-compose.yml
-                        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "
-                          cd ~/hotel && \\
-                          echo '$DOCKER_PASS' | docker login -u $DOCKER_USER --password-stdin && \\
-                          docker compose pull app && \\
-                          docker compose up -d && \\
-                          docker image prune -f
-                        "
+                        echo "$DOCKER_PASS" | ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "docker login -u $DOCKER_USER --password-stdin"
+                        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "cd ~/hotel && docker compose pull app && docker compose up -d && docker image prune -f"
                         '''
                     }
                 }

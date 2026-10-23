@@ -3,11 +3,14 @@ services:
     image: docker.io/${DOCKER_USER}/hotel-fullstack:latest
     container_name: hotelblazor
     restart: always
+    mem_limit: 640m
     ports:
-      - "3001:8080"
+      - "80:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__Default=User Id=hotel;Password=${DB_APP_PASSWORD};Data Source=db:1521/FREEPDB1
+      - ConnectionStrings__DefaultConnection=Server=db;Port=3306;Database=hoteldb;User=hotel;Password=${DB_APP_PASSWORD}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
@@ -15,21 +18,28 @@ services:
       - hotel-network
 
   db:
-    image: gvenzl/oracle-free:slim
-    container_name: hotel-oracle
+    image: mariadb:11.4
+    container_name: hotel-mariadb
     restart: always
+    mem_limit: 512m
+    # utf8mb4 để lưu đúng tiếng Việt; giảm buffer pool cho máy 2 GB RAM
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=128M
     environment:
-      - ORACLE_PASSWORD=${DB_SYS_PASSWORD}
-      - APP_USER=hotel
-      - APP_USER_PASSWORD=${DB_APP_PASSWORD}
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=hoteldb
+      - MARIADB_USER=hotel
+      - MARIADB_PASSWORD=${DB_APP_PASSWORD}
     volumes:
-      - hotel-oracle-data:/opt/oracle/oradata
+      - hotel-db-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh"]
-      interval: 20s
-      timeout: 10s
-      retries: 20
-      start_period: 60s
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - hotel-network
 
@@ -38,4 +48,4 @@ networks:
     driver: bridge
 
 volumes:
-  hotel-oracle-data:
+  hotel-db-data:
