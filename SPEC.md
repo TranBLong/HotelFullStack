@@ -70,18 +70,19 @@ Các trạng thái đặc thù:
 16. *Cho* mọi màn hình danh sách, *khi* API/DB lỗi hoặc mất kết nối, *thì* hiện thông báo lỗi + nút Thử lại, không crash.
     - Cách kiểm chứng: tạm dừng DB hoặc ném exception → UI vẫn ổn định.
 
-### Triển khai (Docker / Render / CI)
-17. *Cho* ứng dụng chạy trên Render, *khi* container khởi động, *thì* tự động chạy `Database.Migrate()` và seed tài khoản Admin (nếu chưa có) từ biến môi trường `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-    - Cách kiểm chứng: xem log Render lúc start có dòng migrate + seed; đăng nhập bằng tài khoản Admin được seed.
-18. *Cho* Dockerfile, *khi* build và chạy, *thì*:
-    - Lắng nghe đúng cổng từ biến `PORT` lúc **runtime** (dùng `CMD ["sh","-c","ASPNETCORE_URLS=http://+:${PORT:-8080} dotnet HotelBlazor.dll"]`).
+### Triển khai (Docker / Jenkins / AWS EC2)
+17. *Cho* ứng dụng chạy trên EC2, *khi* container khởi động, *thì* tự động chạy `Database.Migrate()` và seed tài khoản Admin (nếu chưa có) từ biến môi trường `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
+    - Cách kiểm chứng: `docker logs hotelblazor` có dòng migrate + seed; đăng nhập bằng tài khoản Admin được seed.
+18. *Cho* Dockerfile và `docker-compose.prod.yml`, *khi* build và chạy, *thì*:
+    - Ứng dụng lắng nghe cổng từ biến `PORT` lúc **runtime** (mặc định 8080) và compose map `80:8080`.
     - Endpoint `/health` (MapHealthChecks + AllowAnonymous) trả 200, không redirect.
-    - Cookie hoạt động đúng nhờ ForwardedHeaders (đã xóa KnownNetworks/KnownProxies) và Data Protection keys lưu DB (hoặc chấp nhận phải login lại sau restart).
-    - Cách kiểm chứng: `curl /health` → 200; login → restart container → không lỗi proxy/redirect.
-19. *Cho* deploy lên Render với PostgreSQL, *khi* redeploy, *thì* dữ liệu được giữ nguyên và migration mới (nếu có) được áp dụng tự động lúc khởi động.
-    - Cách kiểm chứng: tạo dữ liệu → redeploy → dữ liệu còn; xem log có dòng migrate.
-20. *Cho* code push lên `main`, *khi* GitHub Actions chạy xong, *thì* image mới xuất hiện trên Docker Hub và Render deploy bản mới (qua Deploy Hook).
-    - Cách kiểm chứng: tab Actions xanh, Docker Hub có tag mới, mở URL Render thấy bản mới.
+    - Cookie hoạt động đúng nhờ ForwardedHeaders (đã xóa KnownNetworks/KnownProxies).
+    - MariaDB chỉ nằm trong mạng Docker nội bộ (không publish cổng 3306 ra ngoài) và có healthcheck; `app` chỉ khởi động khi DB healthy.
+    - Cách kiểm chứng: `curl http://<IP-EC2>/health` → 200; `docker compose ps` thấy DB `healthy`, app `Up`.
+19. *Cho* redeploy lên EC2, *khi* container `app` được thay bằng image mới, *thì* dữ liệu được giữ nguyên nhờ volume `hotel-db-data` và migration mới (nếu có) được áp dụng tự động lúc khởi động.
+    - Cách kiểm chứng: tạo dữ liệu → push code mới → dữ liệu còn; log có dòng migrate.
+20. *Cho* code push lên `main`, *khi* Jenkins chạy (pollSCM, tối đa khoảng 2 phút), *thì* pipeline Checkout → Docker Build & Push → Deploy EC2 chạy xong, image mới (tag `latest` và số build) có trên Docker Hub và EC2 chạy bản mới.
+    - Cách kiểm chứng: Stage View của Jenkins xanh, Docker Hub có tag mới, mở `http://<IP-EC2>` thấy bản mới.
 
 ## 4. Ràng buộc kỹ thuật
 
@@ -94,10 +95,10 @@ Các trạng thái đặc thù:
 - Mọi Service phải async.
 - UI phải responsive cơ bản (mobile + desktop).
 - Không dùng thư viện bên thứ 3 ngoài template Blazor mặc định và các package đã duyệt trong AGENTS.md.
-- Database: PostgreSQL cho cả local và Render.
+- Database: MariaDB 11.4 (provider `Microting.EntityFrameworkCore.MySql`) cho cả local và EC2; trên EC2 MariaDB chạy bằng Docker.
 - Comment code bằng tiếng Việt ngắn gọn khi cần giải thích logic nghiệp vụ.
 - Production: tự `Database.Migrate()` + seed Admin từ env; ForwardedHeaders (xóa KnownNetworks/KnownProxies); Data Protection keys lưu DB hoặc chấp nhận re-login sau restart.
-- Chỉ dùng GitHub + Docker Hub + Render. Không thêm dịch vụ khác.
+- Chỉ dùng GitHub + Docker Hub + Jenkins + AWS EC2. Không thêm dịch vụ khác.
 
 ## 5. Phạm vi không làm (Out of scope cho phiên bản đơn giản)
 
@@ -108,5 +109,5 @@ Các trạng thái đặc thù:
 - Multi-language.
 - Real-time nâng cao giữa nhiều người dùng (thông báo đẩy, chat…). Blazor Server vẫn dùng SignalR cho circuit bình thường, không tắt.
 - Interactive WebAssembly / tách API riêng chỉ để phục vụ WASM.
-- Persistent disk / volume trên Render (free plan không hỗ trợ).
-- Render tự build từ repo hoặc deploy bằng SSH/VPS.
+- Dịch vụ cơ sở dữ liệu quản lý sẵn (RDS...), Kubernetes, nhiều server hoặc load balancer.
+- Webhook GitHub → Jenkins (Jenkins chạy trong mạng nội bộ nên dùng pollSCM).
