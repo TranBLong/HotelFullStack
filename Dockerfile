@@ -7,7 +7,7 @@ RUN dotnet restore "HotelBlazor/HotelBlazor.csproj"
 
 COPY . .
 WORKDIR /src/HotelBlazor
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish -c Release -o /app/publish --no-restore
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
