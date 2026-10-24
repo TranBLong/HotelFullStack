@@ -27,7 +27,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-cred',
                     usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                    docker build -t docker.io/$DOCKER_USER/$IMAGE_NAME:latest \
+                    docker build --network=host -t docker.io/$DOCKER_USER/$IMAGE_NAME:latest \
                                  -t docker.io/$DOCKER_USER/$IMAGE_NAME:$BUILD_NUMBER .
                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                     docker push docker.io/$DOCKER_USER/$IMAGE_NAME:latest
