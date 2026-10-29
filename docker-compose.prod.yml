@@ -11,11 +11,17 @@ services:
       - ConnectionStrings__DefaultConnection=Server=db;Port=3306;Database=hoteldb;User=hotel;Password=${DB_APP_PASSWORD}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      # --- THÊM CÁC BIẾN LOGGING (DEBUG) ---
+      - Logging__LogLevel__Microsoft.AspNetCore.Antiforgery=Debug
+      - Logging__LogLevel__Microsoft.AspNetCore.Server.Kestrel=Debug
+      - Logging__LogLevel__Microsoft.AspNetCore.Components=Debug
     depends_on:
       db:
         condition: service_healthy
     networks:
       - hotel-network
+    volumes:
+      - dpkeys:/root/.aspnet/DataProtection-Keys
 
   db:
     image: mariadb:11.4
@@ -49,3 +55,4 @@ networks:
 
 volumes:
   hotel-db-data:
+  dpkeys:
