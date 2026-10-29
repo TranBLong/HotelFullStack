@@ -1,5 +1,6 @@
 # Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ENV DOTNET_SYSTEM_NET_DISABLEIPV6=1
 WORKDIR /src
 
 COPY ["HotelBlazor/HotelBlazor.csproj", "HotelBlazor/"]
