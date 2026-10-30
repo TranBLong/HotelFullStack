@@ -482,4 +482,5 @@ $RECYCLE.BIN/
 *.swp
 # Theo AGENTS.md: không commit secret
 .env
-appsettings.Development.json
+appsettings.Development.jsono u t /  
+ 
